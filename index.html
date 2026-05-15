@@ -86,20 +86,33 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .bb.reload{background:var(--blue);color:#fff;}
 .bb.auto-bb{background:#8B6914;color:#fff;}
 .bb.auto-bb.active{background:var(--yellow);color:#000;}
+.bb[disabled]{opacity:0.35;pointer-events:none;cursor:not-allowed;}
 
 /* WINNER SCREEN */
-.winner-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;background:var(--bg);}
-.winner-trophy{font-size:72px;animation:bounce .5s ease infinite alternate;}
+.winner-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2rem;text-align:center;background:var(--bg);}
+.winner-trophy{font-size:56px;animation:bounce .5s ease infinite alternate;}
 @keyframes bounce{from{transform:translateY(0);}to{transform:translateY(-12px);}}
-.winner-title{font-size:28px;font-weight:900;color:var(--yellow);letter-spacing:4px;margin:12px 0 4px;}
-.winner-name{font-size:22px;font-weight:700;color:var(--green);margin:8px 0;}
-.winner-card{font-size:14px;color:var(--muted);margin-bottom:16px;}
-.winner-card span{color:var(--orange);font-weight:700;}
-.prize-box{background:var(--bg2);border:2px solid var(--yellow);border-radius:16px;padding:16px 32px;margin:12px 0;}
+.winner-title{font-size:24px;font-weight:900;color:var(--yellow);letter-spacing:4px;margin:8px 0 2px;}
+.winner-name{font-size:20px;font-weight:700;color:var(--green);margin:6px 0;}
+.winner-card-num{font-size:13px;color:var(--muted);margin-bottom:8px;}
+.winner-card-num span{color:var(--orange);font-weight:700;}
+.winner-card-box{background:var(--bg2);border:2px solid var(--yellow);border-radius:12px;padding:10px;margin:4px 0 10px;width:100%;max-width:260px;}
+.winner-card-hdr{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
+.wch{height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin:auto;width:24px;}
+.wch.B{background:#4a9eff;color:#fff;}
+.wch.I{background:#9b59b6;color:#fff;}
+.wch.N{background:#e91e8c;color:#fff;}
+.wch.G{background:#ffd700;color:#000;}
+.wch.O{background:#ff6b35;color:#000;}
+.winner-card-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
+.wcc{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,0.08);}
+.wcc.wmarked{background:var(--green);color:#000;}
+.wcc.wfree{background:var(--purple);color:#fff;}
+.wcc.wwin{background:var(--yellow);color:#000;box-shadow:0 0 6px var(--yellow);}
+.prize-box{background:var(--bg2);border:2px solid var(--yellow);border-radius:16px;padding:14px 28px;margin:6px 0;}
 .prize-label{font-size:12px;color:var(--muted);margin-bottom:4px;}
-.prize-amount{font-size:36px;font-weight:900;color:var(--yellow);}
-.prize-sub{font-size:11px;color:var(--muted);margin-top:4px;}
-.distribute-bar{width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;margin:16px 0 8px;overflow:hidden;}
+.prize-amount{font-size:32px;font-weight:900;color:var(--yellow);}
+.distribute-bar{width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;margin:12px 0 6px;overflow:hidden;}
 .distribute-fill{height:100%;background:var(--yellow);border-radius:4px;width:100%;transition:width 1s linear;}
 .next-label{font-size:13px;color:var(--muted);}
 .next-count{font-size:22px;font-weight:700;color:var(--orange);}
@@ -110,12 +123,12 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
   <!-- ══ SCREEN 1: SELECT ══ -->
   <div class="screen active" id="screen-select">
     <div class="topbar">
-      <div class="stat-box"><div class="stat-label">BALANCE(ካሳ)</div><div class="stat-val green">—</div></div>
-      <div class="stat-box"><div class="stat-label">BET(ወዲ)</div><div class="stat-val">10</div></div>
-      <div class="stat-box"><div class="stat-label">WIN(ሸለ)</div><div class="stat-val green" id="s-win-sel">0</div></div>
+      <div class="stat-box"><div class="stat-label">BALANCE(ሂሳብ)</div><div class="stat-val green">—</div></div>
+      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val">10</div></div>
+      <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="s-win-sel">0</div></div>
       <div class="stat-box"><div class="stat-label">TIME LEFT</div><div class="stat-val yellow" id="s-time">35s</div></div>
     </div>
-    <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>አስከ 2 ካርቴላ ወሙሮ ይቅሩ</div>
+    <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
     <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
     <div class="bottom-bar">
       <div class="selected-info">Selected: <strong id="sel-count">0</strong> / 2</div>
@@ -125,10 +138,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
   <!-- ══ SCREEN 2: GAME ══ -->
   <div class="screen" id="screen-game">
     <div class="topbar">
-      <div class="stat-box"><div class="stat-label">WIN(ሸለ)</div><div class="stat-val green" id="s-win-game">0</div></div>
-      <div class="stat-box"><div class="stat-label">PLAYERS(ተጫዋቾ)</div><div class="stat-val" id="s-players">187</div></div>
-      <div class="stat-box"><div class="stat-label">BET(ወዲ)</div><div class="stat-val">10</div></div>
-      <div class="stat-box"><div class="stat-label">CALL(ቁጥር)</div><div class="stat-val yellow" id="s-call">0</div></div>
+      <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="s-win-game">0</div></div>
+      <div class="stat-box"><div class="stat-label">PLAYERS(ተጫዋቾች)</div><div class="stat-val" id="s-players">0</div></div>
+      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val">10</div></div>
+      <div class="stat-box"><div class="stat-label">CALL(የተጠሩ)</div><div class="stat-val yellow" id="s-call">0</div></div>
     </div>
     <div class="main">
       <div class="left-col">
@@ -164,9 +177,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
       </div>
     </div>
     <div class="bottom-btns">
-      <button class="bb leave" onclick="leaveGame()">⬅ LEAVE</button>
-      <button class="bb reload" onclick="reloadCards()">↺ RELOAD</button>
-      <button class="bb auto-bb active" id="auto-bb" onclick="toggleAutoBtn()">♛ AUTO</button>
+      <button class="bb leave" disabled onclick="leaveGame()">⬅ LEAVE</button>
+      <button class="bb reload" disabled onclick="reloadCards()">↺ RELOAD</button>
+      <button class="bb auto-bb active" disabled id="auto-bb" onclick="toggleAutoBtn()">♛ AUTO</button>
     </div>
   </div>
 
@@ -174,22 +187,25 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
   <div class="screen" id="screen-winner">
     <div class="topbar">
       <div class="stat-box"><div class="stat-label">ROUND</div><div class="stat-val yellow" id="w-round">1</div></div>
-      <div class="stat-box"><div class="stat-label">TOTAL PLAYERS</div><div class="stat-val" id="w-players">187</div></div>
-      <div class="stat-box"><div class="stat-label">BET(ወዲ)</div><div class="stat-val">10</div></div>
+      <div class="stat-box"><div class="stat-label">TOTAL PLAYERS</div><div class="stat-val" id="w-players">0</div></div>
+      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val">10</div></div>
     </div>
     <div class="winner-screen">
       <div class="winner-trophy">🏆</div>
       <div class="winner-title">BINGO! WINNER!</div>
       <div class="winner-name" id="w-name">Abebe</div>
-      <div class="winner-card">Card Number: <span id="w-card">—</span></div>
+      <div class="winner-card-num">Cartela: <span id="w-card">—</span></div>
+      <div class="winner-card-box" id="w-card-box">
+        <div class="winner-card-hdr" id="w-card-hdr"></div>
+        <div class="winner-card-grid" id="w-card-grid"></div>
+      </div>
       <div class="prize-box">
         <div class="prize-label">Prize Distributed</div>
-        <div class="prize-amount" id="w-prize">0 ብር</div>
-        <div class="prize-sub">(80% of total pot)</div>
+        <div class="prize-amount" id="w-prize">0</div>
       </div>
       <div class="distribute-bar"><div class="distribute-fill" id="dist-fill"></div></div>
       <div class="next-label">Next round starts in</div>
-      <div class="next-count" id="next-count">5</div>
+      <div class="next-count" id="next-count">10</div>
     </div>
   </div>
 
@@ -212,7 +228,8 @@ let game={
   called:new Set(),current:null,recentBalls:[],
   autoRunning:true,autoIv:null,callCount:0,
   cards:[],marked:[],wonLines:[],cardNums:[],
-  winAmount:0, totalPlayers:187
+  winAmount:0,totalPlayers:0,
+  otherCartelas:0
 };
 
 /* ══ SELECT ══ */
@@ -242,10 +259,18 @@ function toggleCard(n){
   updateWinDisplay();
 }
 
+function calcTotalPlayers(myCartelas){
+  const otherPeople=Math.floor(Math.random()*15)+5;
+  let otherC=0;
+  for(let i=0;i<otherPeople;i++) otherC+=(Math.random()<0.6?1:2);
+  game.otherCartelas=otherC;
+  return myCartelas+otherC;
+}
+
 function updateWinDisplay(){
   const win=Math.round(selCards.size*10*0.8);
-  document.getElementById('s-win-sel').textContent=win+' ብር';
-  document.getElementById('s-win-game').textContent=win+' ብር';
+  document.getElementById('s-win-sel').textContent=win;
+  document.getElementById('s-win-game').textContent=win;
 }
 
 function startTimer(){
@@ -271,7 +296,7 @@ function startGame(){
   game.wonLines=game.cards.map(()=>new Set());
   game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;
   game.winAmount=Math.round(selCards.size*10*0.8);
-  game.totalPlayers=Math.floor(Math.random()*200)+50;
+  game.totalPlayers=calcTotalPlayers(cardNums.length);
 
   document.getElementById('s-players').textContent=game.totalPlayers;
   document.getElementById('card1-id').textContent=cardNums[0];
@@ -419,23 +444,65 @@ function checkWin(ci){
   return false;
 }
 
+function renderWinnerCard(ci){
+  const card=game.cards[ci];
+  const marked=game.marked[ci];
+  const wins=new Set();
+  game.wonLines[ci].forEach(line=>line.forEach(i=>wins.add(i)));
+
+  document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
+  document.getElementById('w-card-grid').innerHTML=card.map((cell,idx)=>{
+    const isFree=cell.n==='★';
+    const isWin=wins.has(idx);
+    const isMarked=marked.has(idx);
+    const cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
+    return `<div class="${cls}">${cell.n}</div>`;
+  }).join('');
+  document.getElementById('w-card-box').style.display='block';
+}
+
 function triggerWinner(ci){
   stopAutoGame();
   const isPlayer = ci !== undefined;
-  const winnerName = isPlayer
-    ? 'You'
-    : FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
-  const winnerCard = isPlayer
-    ? game.cardNums[ci]
-    : Math.floor(Math.random()*400)+1;
+  const winnerName = isPlayer ? 'You' : FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
+  const winnerCardNum = isPlayer ? game.cardNums[ci] : Math.floor(Math.random()*400)+1;
   const totalPot = game.totalPlayers * 10;
   const prize = Math.round(totalPot * 0.8);
 
   document.getElementById('w-round').textContent=round;
   document.getElementById('w-players').textContent=game.totalPlayers;
   document.getElementById('w-name').textContent=winnerName;
-  document.getElementById('w-card').textContent='#'+winnerCard;
-  document.getElementById('w-prize').textContent=prize+' ብር';
+  document.getElementById('w-card').textContent='#'+winnerCardNum;
+  document.getElementById('w-prize').textContent=prize;
+
+  if(isPlayer){
+    renderWinnerCard(ci);
+  } else {
+    const fakeCard=generateCard();
+    const fakeMarked=new Set([12]);
+    const fakeCalled=new Set();
+    for(let i=0;i<30;i++){
+      const rn=Math.floor(Math.random()*75)+1;
+      fakeCalled.add(rn);
+      fakeCard.forEach((cell,idx)=>{if(cell.n===rn) fakeMarked.add(idx);});
+    }
+    const fakeWins=new Set();
+    const lines=[];
+    for(let r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
+    for(let c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
+    lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);
+    lines.forEach(line=>{if(line.every(i=>fakeMarked.has(i))) line.forEach(i=>fakeWins.add(i));});
+
+    document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
+    document.getElementById('w-card-grid').innerHTML=fakeCard.map((cell,idx)=>{
+      const isFree=cell.n==='★';
+      const isWin=fakeWins.has(idx);
+      const isMarked=fakeMarked.has(idx);
+      const cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
+      return `<div class="${cls}">${cell.n}</div>`;
+    }).join('');
+    document.getElementById('w-card-box').style.display='block';
+  }
 
   showScreen('screen-winner');
 
@@ -444,11 +511,11 @@ function triggerWinner(ci){
   fill.style.transition='none';
   fill.style.width='100%';
   setTimeout(()=>{
-    fill.style.transition='width 5s linear';
+    fill.style.transition='width 10s linear';
     fill.style.width='0%';
   },50);
 
-  let nc=5;
+  let nc=10;
   countEl.textContent=nc;
   const wIv=setInterval(()=>{
     nc--;
