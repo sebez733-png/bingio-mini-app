@@ -9,18 +9,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0e17;
+    --bg: #0b0f19;
     --card: #141c2e;
+    --card2: #1a2438;
     --border: #243049;
     --fg: #e8edf5;
     --muted: #6b7a99;
     --accent: #f43f5e;
     --accent-glow: rgba(244, 63, 94, 0.4);
     --gold: #f59e0b;
+    --gold-dim: rgba(245, 158, 11, 0.15);
     --gold-glow: rgba(245, 158, 11, 0.3);
     --green: #10b981;
+    --orange: #f97316;
+    --orange-glow: rgba(249, 115, 22, 0.3);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
     font-family: 'Space Grotesk', sans-serif;
     background: var(--bg);
@@ -33,19 +37,99 @@
     position: fixed;
     inset: 0;
     background: 
-      radial-gradient(ellipse at 20% 20%, rgba(244, 63, 94, 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(245, 158, 11, 0.06) 0%, transparent 50%);
+      radial-gradient(ellipse at 20% 10%, rgba(244, 63, 94, 0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
     z-index: -1;
     pointer-events: none;
   }
-  .app { max-width: 420px; margin: 0 auto; padding: 16px; }
-  
-  /* Typography */
+  .app { max-width: 420px; margin: 0 auto; padding: 12px; padding-bottom: 100px; }
   .font-display { font-family: 'Outfit', sans-serif; }
   .text-gold { color: var(--gold); }
   .text-accent { color: var(--accent); }
   .text-green { color: var(--green); }
+  .text-orange { color: var(--orange); }
   .text-muted { color: var(--muted); }
+
+  /* Top Bar */
+  .top-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .top-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    text-align: center;
+  }
+  .top-stat .ts-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .top-stat .ts-val { font-size: 18px; font-weight: 800; font-family: 'Outfit', sans-serif; }
+
+  /* Cartela Grid */
+  .cartela-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .cartela-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+    user-select: none;
+  }
+  .cartela-cell:active { transform: scale(0.9); }
+  .cartela-cell.selected {
+    background: rgba(249, 115, 22, 0.15);
+    border-color: var(--orange);
+    color: var(--orange);
+    box-shadow: 0 0 10px var(--orange-glow);
+  }
+  .cartela-cell.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 9px;
+    color: var(--orange);
+  }
+  .cartela-cell.taken {
+    background: rgba(107, 122, 153, 0.1);
+    border-color: transparent;
+    color: var(--muted);
+    opacity: 0.3;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+
+  /* Selection Info Bar */
+  .select-bar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .select-bar .sb-left { display: flex; align-items: center; gap: 8px; }
+  .select-bar .sb-icon {
+    width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    background: var(--gold-dim); color: var(--gold); font-weight: 900; font-size: 14px;
+  }
 
   /* Buttons */
   .btn {
@@ -55,134 +139,215 @@
   }
   .btn:active { transform: scale(0.97); }
   .btn-primary { background: linear-gradient(135deg, var(--accent), #be123c); color: white; box-shadow: 0 4px 20px var(--accent-glow); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
   .btn-gold { background: linear-gradient(135deg, var(--gold), #d97706); color: #1a1a1a; box-shadow: 0 4px 20px var(--gold-glow); }
-  .btn-outline { background: transparent; color: var(--fg); border: 1.5px solid var(--border); }
+  .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-outline { background: transparent; color: var(--fg); border: 1.5px solid var(--border); padding: 10px; width: auto; }
   .btn-outline.active { border-color: var(--gold); color: var(--gold); background: rgba(245, 158, 11, 0.1); }
-  
-  /* Cards & Containers */
-  .box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
 
-  /* Lobby Animations */
-  .float-ball { animation: float 3s ease-in-out infinite; display: inline-block; }
-  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  /* Box */
+  .box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
 
   /* Game Grids */
-  .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+  .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
   .bingo-cell {
     aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-    background: #1a2236; border: 1px solid transparent; border-radius: 6px;
-    font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 14px;
-    transition: all 0.2s;
+    background: #1a2236; border: 1px solid transparent; border-radius: 4px;
+    font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 12px;
+    transition: all 0.15s;
   }
-  .bingo-cell.header { background: transparent; border: none; font-size: 16px; font-weight: 900; }
+  .bingo-cell.header { background: transparent; border: none; font-size: 14px; font-weight: 900; }
   .bingo-cell.header-b { color: var(--accent); }
   .bingo-cell.header-i { color: var(--gold); }
   .bingo-cell.header-n { color: var(--green); }
   .bingo-cell.header-g { color: #8b5cf6; }
   .bingo-cell.header-o { color: #06b6d4; }
-  .bingo-cell.free { background: rgba(244, 63, 94, 0.1); color: var(--gold); font-size: 9px; border-color: var(--gold); }
+  .bingo-cell.free { background: rgba(244, 63, 94, 0.1); color: var(--gold); font-size: 7px; border-color: var(--gold); }
   .bingo-cell.marked {
-    background: linear-gradient(135deg, rgba(244,63,94,0.3), rgba(244,63,94,0.1));
-    border-color: var(--accent); color: white; box-shadow: 0 0 8px var(--accent-glow);
+    background: linear-gradient(135deg, rgba(249,115,22,0.3), rgba(249,115,22,0.1));
+    border-color: var(--orange); color: white;
   }
-  .bingo-cell.winning { animation: winPulse 0.5s infinite alternate; border-color: var(--gold); box-shadow: 0 0 12px var(--gold-glow); background: rgba(245,158,11,0.3); }
-  @keyframes winPulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+  .bingo-cell.winning { animation: winPulse 0.5s infinite alternate; border-color: var(--gold); box-shadow: 0 0 10px var(--gold-glow); background: rgba(245,158,11,0.3); }
+  @keyframes winPulse { from { transform: scale(1); } to { transform: scale(1.08); } }
 
-  /* Caller Display */
-  .caller-display {
+  /* Caller */
+  .caller-box {
     background: linear-gradient(145deg, var(--card), #0f1629); border: 1px solid var(--border);
-    border-radius: 20px; padding: 16px; text-align: center; margin-bottom: 12px; position: relative; overflow: hidden;
+    border-radius: 16px; padding: 12px; text-align: center; margin-bottom: 10px; position: relative; overflow: hidden;
   }
-  .caller-display::before { content:''; position: absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
-  .called-num { font-size: 48px; font-weight: 900; line-height: 1; }
+  .caller-box::before { content:''; position: absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+  .called-num { font-size: 44px; font-weight: 900; line-height: 1; }
   .called-num.pop { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes popIn { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* Called strip */
+  .called-strip {
+    display: flex; flex-wrap: wrap; gap: 4px; max-height: 60px; overflow-y: auto; margin-top: 8px; justify-content: center;
+  }
+  .called-strip::-webkit-scrollbar { width: 2px; }
+  .called-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .called-chip {
+    padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
+    background: var(--card2); border: 1px solid var(--border);
+  }
 
   /* Screens */
   .screen { display: none; }
   .screen.active { display: block; }
 
+  /* Bottom CTA */
+  .bottom-cta {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 420px; padding: 12px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    z-index: 50;
+  }
+
   /* Win Overlay */
-  .overlay { position: fixed; inset:0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: none; align-items: center; justify-content: center; }
+  .overlay { position: fixed; inset:0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 100; display: none; align-items: center; justify-content: center; }
   .overlay.active { display: flex; }
   .overlay-card { background: var(--card); border: 2px solid var(--gold); border-radius: 24px; padding: 32px; text-align: center; width: 90%; max-width: 320px; animation: popIn 0.4s ease; }
+
+  /* Floating BINGO letters */
+  .float-l { display: inline-block; animation: floatL 2.5s ease-in-out infinite; }
+  @keyframes floatL { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 </style>
 </head>
 <body>
 
 <div class="app">
-  
-  <!-- ========== LOBBY SCREEN ========== -->
+
+  <!-- ========== LOBBY / CARTELA SELECT ========== -->
   <div class="screen active" id="lobbyScreen">
-    <div class="text-center mb-6 pt-8">
-      <div class="text-4xl font-display font-black tracking-tight mb-2">
-        <span class="text-accent float-ball" style="animation-delay:0s">B</span>
-        <span class="text-gold float-ball" style="animation-delay:0.2s">I</span>
-        <span class="text-green float-ball" style="animation-delay:0.4s">N</span>
-        <span class="text-purple-400 float-ball" style="animation-delay:0.6s">G</span>
-        <span class="text-cyan-400 float-ball" style="animation-delay:0.8s">O</span>
+
+    <!-- Title -->
+    <div class="text-center pt-2 pb-3">
+      <div class="font-display font-black text-3xl tracking-tight">
+        <span class="text-accent float-l" style="animation-delay:0s">B</span>
+        <span class="text-gold float-l" style="animation-delay:0.15s">I</span>
+        <span class="text-green float-l" style="animation-delay:0.3s">N</span>
+        <span class="text-purple-400 float-l" style="animation-delay:0.45s">G</span>
+        <span class="text-cyan-400 float-l" style="animation-delay:0.6s">O</span>
       </div>
-      <p class="text-muted text-sm">Adwa Bingo Hall</p>
+      <p class="text-muted text-xs tracking-widest uppercase mt-1">Adwa Bingo Hall</p>
     </div>
 
-    <div class="box text-center">
-      <p class="text-muted text-xs uppercase tracking-widest mb-1">Next Game Prize Pool</p>
-      <p class="text-gold font-display font-black text-4xl">100 ETB</p>
-      <p class="text-muted text-sm mt-2">32 Players in Room</p>
-    </div>
-
-    <div class="box">
-      <p class="font-bold mb-3 text-center">Select Number of Cards</p>
-      <div class="flex gap-3">
-        <button class="btn btn-outline active flex-1" id="btn1Card" onclick="selectCards(1)">1 Card<br><span class="text-gold text-xs">10 ETB</span></button>
-        <button class="btn btn-outline flex-1" id="btn2Card" onclick="selectCards(2)">2 Cards<br><span class="text-gold text-xs">20 ETB</span></button>
+    <!-- Top Stats -->
+    <div class="top-bar">
+      <div class="top-stat">
+        <div class="ts-label">Balance</div>
+        <div class="ts-val text-green" id="dispBalance">0</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Bet</div>
+        <div class="ts-val text-accent" id="dispBet">0</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Win</div>
+        <div class="ts-val text-gold" id="dispWin">176</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Time</div>
+        <div class="ts-val text-orange" id="dispTime">29s</div>
       </div>
     </div>
 
-    <button class="btn btn-primary text-lg" onclick="startGame()">
-      🎲 Buy & Play Now
-    </button>
+    <!-- Selection Info -->
+    <div class="select-bar">
+      <div class="sb-left">
+        <div class="sb-icon" id="sbIcon">0</div>
+        <div>
+          <div class="text-sm font-bold">Select Cartela</div>
+          <div class="text-xs text-muted">You can select up to 2 cards</div>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="text-xs text-muted">Selected</div>
+        <div class="font-bold text-orange" id="selCount">0 / 2</div>
+      </div>
+    </div>
+
+    <!-- Cartela Grid -->
+    <div class="cartela-grid" id="cartelaGrid">
+      <!-- 1 to 60 injected by JS -->
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="bottom-cta">
+      <div class="text-center text-xs text-muted mb-2" id="ctaHint">Tap numbers above to select your cards</div>
+      <button class="btn btn-primary" id="buyBtn" disabled onclick="startGame()">
+        🎲 Buy & Play
+      </button>
+    </div>
   </div>
 
   <!-- ========== GAME SCREEN ========== -->
   <div class="screen" id="gameScreen">
-    
-    <!-- Top Caller -->
-    <div class="caller-display">
+
+    <!-- Caller -->
+    <div class="caller-box">
       <div class="text-xs text-muted uppercase tracking-widest mb-1">Current Call</div>
       <div class="called-num font-display" id="callerNum">-</div>
-      <div class="flex justify-around text-xs text-muted mt-3">
+      <div class="flex justify-around text-xs text-muted mt-2">
         <span>Called: <span class="text-fg font-bold" id="calledCount">0</span></span>
         <span>Left: <span class="text-fg font-bold" id="leftCount">75</span></span>
       </div>
+      <div class="called-strip" id="calledStrip"></div>
     </div>
 
-    <!-- Player Status -->
-    <div class="flex gap-2 mb-3 text-center text-xs">
-      <div class="box flex-1 py-2 mb-0"><span class="text-muted block">Cards</span><span class="font-bold text-gold" id="activeCards">1</span></div>
-      <div class="box flex-1 py-2 mb-0"><span class="text-muted block">Lines</span><span class="font-bold text-green" id="linesFound">0</span></div>
-      <div class="box flex-1 py-2 mb-0"><span class="text-muted block">Status</span><span class="font-bold text-accent" id="gameStatus">Playing</span></div>
+    <!-- Game Stats -->
+    <div class="top-bar">
+      <div class="top-stat">
+        <div class="ts-label">Cards</div>
+        <div class="ts-val text-gold" id="activeCards">1</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Lines</div>
+        <div class="ts-val text-green" id="linesFound">0</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Prize</div>
+        <div class="ts-val text-gold">176</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Status</div>
+        <div class="ts-val text-accent" id="gameStatus">Live</div>
+      </div>
     </div>
 
     <!-- Cards Container -->
-    <div id="cardsContainer" class="flex flex-col gap-4 mb-4">
+    <div id="cardsContainer" class="flex flex-col gap-3 mb-4">
       <!-- Cards injected by JS -->
     </div>
 
-    <!-- Controls -->
-    <div class="flex gap-2">
-      <button class="btn btn-gold flex-1" id="bingoBtn" onclick="claimBingo()" disabled>🏆 Claim BINGO</button>
+    <!-- Bottom CTA Game -->
+    <div class="bottom-cta">
+      <button class="btn btn-gold" id="bingoBtn" onclick="claimBingo()" disabled>🏆 Claim BINGO</button>
     </div>
-
   </div>
+
 </div>
 
 <!-- Win Overlay -->
 <div class="overlay" id="winOverlay">
   <div class="overlay-card">
     <div class="font-display font-black text-5xl text-gold mb-2">BINGO!</div>
-    <p class="text-muted mb-6" id="winMsg">You won the prize!</p>
-    <button class="btn btn-primary" onclick="backToLobby()">Play Again</button>
+    <p class="text-muted mb-4" id="winMsg">You won the prize!</p>
+    <div class="top-bar mb-4">
+      <div class="top-stat">
+        <div class="ts-label">Lines</div>
+        <div class="ts-val text-green" id="winLines">0</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Cards</div>
+        <div class="ts-val text-gold" id="winCards">0</div>
+      </div>
+      <div class="top-stat">
+        <div class="ts-label">Prize</div>
+        <div class="ts-val text-accent" id="winPrize">0</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="backToLobby()">🔄 Play Again</button>
   </div>
 </div>
 
@@ -190,47 +355,126 @@
   const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
   if (tg) { tg.ready(); tg.expand(); }
 
-  let selectedCardCount = 1;
+  // --- State ---
+  let selectedCartelas = [];  // Array of selected cartela numbers (1-60)
   let cards = [];
   let calledNumbers = [];
   let gameInterval = null;
   let gameOver = false;
   let totalLines = 0;
   let winningCells = [];
+  let countdownInterval = null;
 
+  const TOTAL_CARTELAS = 60;
+  const MAX_SELECT = 2;
+  const BET_PER_CARD = 10;
+  const PRIZE_PER_LINE = 88;
   const RANGES = [[1,15],[16,30],[31,45],[46,60],[61,75]];
   const LETTERS = ['B','I','N','G','O'];
 
-  // --- Lobby Logic ---
-  function selectCards(num) {
-    selectedCardCount = num;
-    document.getElementById('btn1Card').classList.toggle('active', num === 1);
-    document.getElementById('btn2Card').classList.toggle('active', num === 2);
+  // Simulate some "taken" cartelas (other players in the room)
+  const takenCartelas = new Set();
+  while (takenCartelas.size < 18) {
+    takenCartelas.add(Math.floor(Math.random() * TOTAL_CARTELAS) + 1);
   }
 
-  // --- Game Logic ---
+  // --- Init Lobby ---
+  function initLobby() {
+    const grid = document.getElementById('cartelaGrid');
+    grid.innerHTML = '';
+    selectedCartelas = [];
+    updateSelectionUI();
+
+    for (let i = 1; i <= TOTAL_CARTELAS; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cartela-cell';
+      cell.dataset.num = i;
+      cell.textContent = i;
+
+      if (takenCartelas.has(i)) {
+        cell.classList.add('taken');
+      } else {
+        cell.addEventListener('click', () => toggleCartela(i, cell));
+      }
+      grid.appendChild(cell);
+    }
+
+    // Start lobby countdown
+    startLobbyCountdown();
+  }
+
+  function toggleCartela(num, cell) {
+    const idx = selectedCartelas.indexOf(num);
+    if (idx > -1) {
+      // Deselect
+      selectedCartelas.splice(idx, 1);
+      cell.classList.remove('selected');
+    } else {
+      if (selectedCartelas.length >= MAX_SELECT) {
+        // Shake to indicate max reached
+        cell.style.animation = 'none';
+        void cell.offsetWidth;
+        cell.style.animation = '';
+        if (tg) tg.HapticFeedback.notificationOccurred('error');
+        return;
+      }
+      selectedCartelas.push(num);
+      cell.classList.add('selected');
+      if (tg) tg.HapticFeedback.impactOccurred('light');
+    }
+    updateSelectionUI();
+  }
+
+  function updateSelectionUI() {
+    const count = selectedCartelas.length;
+    document.getElementById('selCount').textContent = `${count} / ${MAX_SELECT}`;
+    document.getElementById('sbIcon').textContent = count;
+    document.getElementById('dispBet').textContent = count * BET_PER_CARD;
+    document.getElementById('buyBtn').disabled = count === 0;
+    document.getElementById('ctaHint').textContent = 
+      count === 0 ? 'Tap numbers above to select your cards' :
+      count === 1 ? `Card #${selectedCartelas[0]} selected — pick 1 more or play!` :
+      `Cards #${selectedCartelas[0]} & #${selectedCartelas[1]} selected!`;
+  }
+
+  let lobbyTime = 29;
+  function startLobbyCountdown() {
+    lobbyTime = 29;
+    if (countdownInterval) clearInterval(countdownInterval);
+    document.getElementById('dispTime').textContent = lobbyTime + 's';
+    countdownInterval = setInterval(() => {
+      lobbyTime--;
+      if (lobbyTime < 0) lobbyTime = 29; // Reset loop for demo
+      document.getElementById('dispTime').textContent = lobbyTime + 's';
+    }, 1000);
+  }
+
+  // --- Start Game ---
   function startGame() {
+    if (selectedCartelas.length === 0) return;
+    if (countdownInterval) clearInterval(countdownInterval);
+
     cards = [];
     calledNumbers = [];
     gameOver = false;
     totalLines = 0;
     winningCells = [];
 
-    // Generate 1 or 2 cards with random IDs (1-400)
-    for (let i = 0; i < selectedCardCount; i++) {
-      const cardId = Math.floor(Math.random() * 400) + 1;
+    // Generate cards from selected cartelas
+    selectedCartelas.forEach(cartelaNum => {
       const grid = generateGrid();
       const marked = Array(5).fill().map(() => Array(5).fill(false));
-      marked[2][2] = true; // Free space
-      cards.push({ id: cardId, grid, marked });
-    }
+      marked[2][2] = true;
+      cards.push({ id: cartelaNum, grid, marked });
+    });
 
     switchScreen('gameScreen');
-    document.getElementById('activeCards').textContent = selectedCardCount;
+    document.getElementById('activeCards').textContent = selectedCartelas.length;
     document.getElementById('linesFound').textContent = '0';
-    document.getElementById('gameStatus').textContent = 'Playing';
+    document.getElementById('gameStatus').textContent = 'Live';
     document.getElementById('bingoBtn').disabled = true;
-    
+    document.getElementById('calledStrip').innerHTML = '';
+
     renderCards();
     startCaller();
   }
@@ -241,7 +485,6 @@
       const [min, max] = RANGES[col];
       const pool = [];
       for (let n = min; n <= max; n++) pool.push(n);
-      // Shuffle pool
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -258,23 +501,21 @@
     cards.forEach((card, index) => {
       const cardEl = document.createElement('div');
       cardEl.className = 'box';
-      
-      let html = `<div class="flex justify-between items-center mb-2">
-        <span class="text-xs text-muted uppercase tracking-widest">Card #${card.id}</span>
-        <span class="text-xs text-gold font-bold">${index === 0 ? '10 ETB' : '20 ETB'} Bet</span>
+
+      let html = `<div class="flex justify-between items-center mb-1">
+        <span class="text-xs text-muted uppercase tracking-widest font-bold">Cartela #${card.id}</span>
+        <span class="text-xs text-orange font-bold">${BET_PER_CARD} ETB</span>
       </div>`;
 
       html += `<div class="bingo-grid">`;
-      // Headers
-      LETTERS.forEach((l, i) => html += `<div class="bingo-cell header header-${l.toLowerCase()}">${l}</div>`);
-      
-      // Rows
+      LETTERS.forEach((l) => html += `<div class="bingo-cell header header-${l.toLowerCase()}">${l}</div>`);
+
       for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 5; col++) {
           const isFree = (row === 2 && col === 2);
           const isMarked = card.marked[col][row];
           const isWinning = winningCells.some(c => c.cardIdx === index && c.col === col && c.row === row);
-          
+
           let classes = 'bingo-cell';
           if (isFree) classes += ' free marked';
           else if (isWinning) classes += ' winning marked';
@@ -290,18 +531,12 @@
     });
   }
 
+  // --- Caller ---
   function startCaller() {
     if (gameInterval) clearInterval(gameInterval);
-    
-    // Call first number immediately
     callNumber();
-    
-    // Then call every 3 seconds
     gameInterval = setInterval(() => {
-      if (calledNumbers.length >= 75 || gameOver) {
-        clearInterval(gameInterval);
-        return;
-      }
+      if (calledNumbers.length >= 75 || gameOver) { clearInterval(gameInterval); return; }
       callNumber();
     }, 3000);
   }
@@ -316,16 +551,14 @@
     const num = available[Math.floor(Math.random() * available.length)];
     calledNumbers.push(num);
 
-    // Get letter
     let letterIdx = 0;
     for (let i = 0; i < RANGES.length; i++) {
       if (num >= RANGES[i][0] && num <= RANGES[i][1]) { letterIdx = i; break; }
     }
     const letter = LETTERS[letterIdx];
 
-    // Update UI
     const display = document.getElementById('callerNum');
-    display.innerHTML = `<span class="text-muted text-2xl">${letter}</span> ${num}`;
+    display.innerHTML = `<span class="text-muted text-xl">${letter}</span> ${num}`;
     display.classList.remove('pop');
     void display.offsetWidth;
     display.classList.add('pop');
@@ -333,15 +566,20 @@
     document.getElementById('calledCount').textContent = calledNumbers.length;
     document.getElementById('leftCount').textContent = 75 - calledNumbers.length;
 
-    // Auto-Daub (Mark cards automatically)
-    autoDaub(num);
+    // Add chip to strip
+    const strip = document.getElementById('calledStrip');
+    const chip = document.createElement('span');
+    chip.className = 'called-chip';
+    chip.innerHTML = `<span class="text-muted" style="font-size:8px">${letter}</span>${num}`;
+    strip.insertBefore(chip, strip.firstChild);
 
+    autoDaub(num);
     if (tg) tg.HapticFeedback.impactOccurred('light');
   }
 
   function autoDaub(calledNum) {
     let changed = false;
-    cards.forEach((card, idx) => {
+    cards.forEach((card) => {
       for (let col = 0; col < 5; col++) {
         for (let row = 0; row < 5; row++) {
           if (row === 2 && col === 2) continue;
@@ -358,12 +596,13 @@
     }
   }
 
+  // --- Win Check ---
   function checkAllBingos() {
     let currentRoundLines = 0;
-    winningCells = []; // Reset visual winning cells
+    winningCells = [];
 
     cards.forEach((card, cardIdx) => {
-      // Check Rows
+      // Rows
       for (let row = 0; row < 5; row++) {
         let complete = true;
         let lineCells = [];
@@ -373,7 +612,7 @@
         }
         if (complete) { currentRoundLines++; winningCells.push(...lineCells); }
       }
-      // Check Cols
+      // Cols
       for (let col = 0; col < 5; col++) {
         let complete = true;
         let lineCells = [];
@@ -397,9 +636,8 @@
       totalLines = currentRoundLines;
       document.getElementById('linesFound').textContent = totalLines;
       document.getElementById('bingoBtn').disabled = false;
-      
-      // Re-render to show winning cells glowing
-      renderCards(); 
+      renderCards();
+      if (tg) tg.HapticFeedback.notificationOccurred('success');
     }
   }
 
@@ -411,18 +649,22 @@
     document.getElementById('gameStatus').textContent = 'Won!';
     document.getElementById('bingoBtn').disabled = true;
 
-    // Show overlay
+    const totalPrize = totalLines * PRIZE_PER_LINE;
+
     document.getElementById('winOverlay').classList.add('active');
-    document.getElementById('winMsg').textContent = `You hit BINGO with ${totalLines} line(s) on your cards!`;
+    document.getElementById('winMsg').textContent = `You hit BINGO on your cartela!`;
+    document.getElementById('winLines').textContent = totalLines;
+    document.getElementById('winCards').textContent = selectedCartelas.length;
+    document.getElementById('winPrize').textContent = totalPrize;
 
     if (tg) {
       tg.HapticFeedback.notificationOccurred('success');
-      // Send structured data back to Python bot
       const winData = {
         action: 'bingo_win',
         lines: totalLines,
-        cards_played: selectedCardCount,
-        card_ids: cards.map(c => c.id)
+        cards_played: selectedCartelas.length,
+        cartela_ids: selectedCartelas,
+        prize: totalPrize
       };
       tg.sendData(JSON.stringify(winData));
     }
@@ -431,12 +673,16 @@
   function backToLobby() {
     document.getElementById('winOverlay').classList.remove('active');
     switchScreen('lobbyScreen');
+    initLobby();
   }
 
   function switchScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
   }
+
+  // --- Init ---
+  initLobby();
 </script>
 </body>
 </html>
