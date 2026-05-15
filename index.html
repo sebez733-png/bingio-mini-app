@@ -1,688 +1,529 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Adwa Bingo</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
-  :root {
-    --bg: #0b0f19;
-    --card: #141c2e;
-    --card2: #1a2438;
-    --border: #243049;
-    --fg: #e8edf5;
-    --muted: #6b7a99;
-    --accent: #f43f5e;
-    --accent-glow: rgba(244, 63, 94, 0.4);
-    --gold: #f59e0b;
-    --gold-dim: rgba(245, 158, 11, 0.15);
-    --gold-glow: rgba(245, 158, 11, 0.3);
-    --green: #10b981;
-    --orange: #f97316;
-    --orange-glow: rgba(249, 115, 22, 0.3);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    font-family: 'Space Grotesk', sans-serif;
-    background: var(--bg);
-    color: var(--fg);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: 
-      radial-gradient(ellipse at 20% 10%, rgba(244, 63, 94, 0.07) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 90%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
-    z-index: -1;
-    pointer-events: none;
-  }
-  .app { max-width: 420px; margin: 0 auto; padding: 12px; padding-bottom: 100px; }
-  .font-display { font-family: 'Outfit', sans-serif; }
-  .text-gold { color: var(--gold); }
-  .text-accent { color: var(--accent); }
-  .text-green { color: var(--green); }
-  .text-orange { color: var(--orange); }
-  .text-muted { color: var(--muted); }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0d0d2b;--bg2:#1a1a3e;--bg3:#12122a;
+  --orange:#ff6b35;--green:#00c875;--blue:#4a9eff;
+  --purple:#9b59b6;--pink:#e91e8c;--yellow:#ffd700;
+  --text:#fff;--muted:rgba(255,255,255,0.5);
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+.app{max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+.screen{display:none;flex:1;flex-direction:column;}
+.screen.active{display:flex;}
 
-  /* Top Bar */
-  .top-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-  .top-stat {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 4px;
-    text-align: center;
-  }
-  .top-stat .ts-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  .top-stat .ts-val { font-size: 18px; font-weight: 800; font-family: 'Outfit', sans-serif; }
+/* TOPBAR */
+.topbar{background:var(--bg2);padding:10px 12px;display:flex;gap:6px;flex-shrink:0;}
+.stat-box{flex:1;background:var(--bg3);border-radius:8px;padding:6px 8px;text-align:center;}
+.stat-label{font-size:9px;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;}
+.stat-val{font-size:18px;font-weight:700;line-height:1.2;color:#fff;}
+.stat-val.green{color:var(--green);}
+.stat-val.yellow{color:var(--yellow);}
+.stat-val.orange{color:var(--orange);}
 
-  /* Cartela Grid */
-  .cartela-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-  .cartela-cell {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--card2);
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    position: relative;
-    user-select: none;
-  }
-  .cartela-cell:active { transform: scale(0.9); }
-  .cartela-cell.selected {
-    background: rgba(249, 115, 22, 0.15);
-    border-color: var(--orange);
-    color: var(--orange);
-    box-shadow: 0 0 10px var(--orange-glow);
-  }
-  .cartela-cell.selected::after {
-    content: '✓';
-    position: absolute;
-    top: 2px;
-    right: 4px;
-    font-size: 9px;
-    color: var(--orange);
-  }
-  .cartela-cell.taken {
-    background: rgba(107, 122, 153, 0.1);
-    border-color: transparent;
-    color: var(--muted);
-    opacity: 0.3;
-    cursor: not-allowed;
-    text-decoration: line-through;
-  }
+/* SELECT SCREEN */
+.select-info{background:var(--bg2);text-align:center;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.07);}
+.select-info span{color:var(--orange);font-weight:700;}
+.cards-scroll{flex:1;overflow-y:auto;padding:8px;}
+.cards-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+.card-cell{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1.5px solid rgba(255,107,53,0.4);transition:all .15s;user-select:none;}
+.card-cell:active{transform:scale(0.93);}
+.card-cell.selected{background:var(--orange);color:#000;border-color:var(--orange);box-shadow:0 0 8px rgba(255,107,53,0.6);transform:scale(1.05);}
+.card-cell.disabled{opacity:0.3;cursor:not-allowed;}
+.bottom-bar{background:var(--bg2);padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.selected-info{flex:1;font-size:12px;color:var(--muted);}
+.selected-info strong{color:var(--text);font-size:14px;}
+.play-btn{padding:11px 24px;border-radius:10px;border:none;background:var(--green);color:#000;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;opacity:.4;pointer-events:none;}
+.play-btn.ready{opacity:1;pointer-events:all;}
+.play-btn.ready:active{transform:scale(0.97);}
 
-  /* Selection Info Bar */
-  .select-bar {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .select-bar .sb-left { display: flex; align-items: center; gap: 8px; }
-  .select-bar .sb-icon {
-    width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    background: var(--gold-dim); color: var(--gold); font-weight: 900; font-size: 14px;
-  }
+/* GAME SCREEN */
+.main{display:flex;flex:1;overflow:hidden;}
+.left-col{flex:1;padding:8px 4px 8px 8px;overflow-y:auto;}
+.bingo-header-row{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
+.bh{text-align:center;font-size:13px;font-weight:700;padding:5px 2px;border-radius:6px;color:#fff;}
+.bh.B{background:var(--green);color:#000;}
+.bh.I{background:var(--blue);color:#000;}
+.bh.N{background:var(--purple);}
+.bh.G{background:var(--pink);}
+.bh.O{background:var(--orange);}
+.num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
+.num-cell{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1.5px solid rgba(255,107,53,0.4);transition:all .2s;}
+.num-cell.called{background:var(--green);color:#000;border-color:var(--green);}
+.num-cell.current{background:var(--orange);color:#000;border-color:var(--orange);transform:scale(1.08);box-shadow:0 0 10px var(--orange);}
 
-  /* Buttons */
-  .btn {
-    width: 100%; padding: 14px; border-radius: 14px; border: none;
-    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px;
-    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: linear-gradient(135deg, var(--accent), #be123c); color: white; box-shadow: 0 4px 20px var(--accent-glow); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-  .btn-gold { background: linear-gradient(135deg, var(--gold), #d97706); color: #1a1a1a; box-shadow: 0 4px 20px var(--gold-glow); }
-  .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-  .btn-outline { background: transparent; color: var(--fg); border: 1.5px solid var(--border); padding: 10px; width: auto; }
-  .btn-outline.active { border-color: var(--gold); color: var(--gold); background: rgba(245, 158, 11, 0.1); }
+.right-col{width:168px;padding:8px 8px 8px 4px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
+.recent-balls{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
+.rball{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-direction:column;}
+.rball .rl{font-size:7px;opacity:.8;}
+.rball .rn{font-size:11px;}
+.current-box{background:var(--bg2);border-radius:10px;padding:8px 10px;text-align:center;}
+.current-label{font-size:10px;color:var(--muted);margin-bottom:4px;}
+.current-ball-big{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;font-weight:800;margin:auto;}
+.cbl{font-size:11px;opacity:.9;}
+.cbn{font-size:28px;line-height:1;}
+.auto-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:10px;padding:8px 10px;}
+.auto-lbl{font-size:12px;font-weight:600;color:var(--green);}
+.toggle{width:40px;height:22px;border-radius:11px;background:rgba(255,255,255,0.2);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--green);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;}
+.toggle.on::after{left:20px;}
+.card-box{background:var(--bg2);border-radius:10px;padding:8px;}
+.card-id-lbl{text-align:center;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.card-hdr{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
+.ch{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;margin:auto;}
+.ch.B{background:var(--green);color:#000;}
+.ch.I{background:var(--blue);color:#000;}
+.ch.N{background:var(--purple);}
+.ch.G{background:var(--pink);}
+.ch.O{background:var(--orange);}
+.card-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;}
+.cc{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,0.08);transition:all .2s;}
+.cc.marked{background:var(--green);color:#000;}
+.cc.free{background:var(--purple);color:#fff;}
+.cc.win-cell{background:var(--yellow);color:#000;box-shadow:0 0 6px var(--yellow);}
+.no-card{background:var(--bg2);border-radius:10px;padding:10px;display:flex;align-items:center;justify-content:center;opacity:.4;min-height:50px;}
+.bottom-btns{display:flex;gap:6px;padding:8px;flex-shrink:0;}
+.bb{flex:1;padding:11px 4px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s;}
+.bb:active{transform:scale(0.97);}
+.bb.leave{background:#e74c3c;color:#fff;}
+.bb.reload{background:var(--blue);color:#fff;}
+.bb.auto-bb{background:#8B6914;color:#fff;}
+.bb.auto-bb.active{background:var(--yellow);color:#000;}
 
-  /* Box */
-  .box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
-
-  /* Game Grids */
-  .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
-  .bingo-cell {
-    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-    background: #1a2236; border: 1px solid transparent; border-radius: 4px;
-    font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 12px;
-    transition: all 0.15s;
-  }
-  .bingo-cell.header { background: transparent; border: none; font-size: 14px; font-weight: 900; }
-  .bingo-cell.header-b { color: var(--accent); }
-  .bingo-cell.header-i { color: var(--gold); }
-  .bingo-cell.header-n { color: var(--green); }
-  .bingo-cell.header-g { color: #8b5cf6; }
-  .bingo-cell.header-o { color: #06b6d4; }
-  .bingo-cell.free { background: rgba(244, 63, 94, 0.1); color: var(--gold); font-size: 7px; border-color: var(--gold); }
-  .bingo-cell.marked {
-    background: linear-gradient(135deg, rgba(249,115,22,0.3), rgba(249,115,22,0.1));
-    border-color: var(--orange); color: white;
-  }
-  .bingo-cell.winning { animation: winPulse 0.5s infinite alternate; border-color: var(--gold); box-shadow: 0 0 10px var(--gold-glow); background: rgba(245,158,11,0.3); }
-  @keyframes winPulse { from { transform: scale(1); } to { transform: scale(1.08); } }
-
-  /* Caller */
-  .caller-box {
-    background: linear-gradient(145deg, var(--card), #0f1629); border: 1px solid var(--border);
-    border-radius: 16px; padding: 12px; text-align: center; margin-bottom: 10px; position: relative; overflow: hidden;
-  }
-  .caller-box::before { content:''; position: absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, transparent, var(--orange), transparent); }
-  .called-num { font-size: 44px; font-weight: 900; line-height: 1; }
-  .called-num.pop { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  @keyframes popIn { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-  /* Called strip */
-  .called-strip {
-    display: flex; flex-wrap: wrap; gap: 4px; max-height: 60px; overflow-y: auto; margin-top: 8px; justify-content: center;
-  }
-  .called-strip::-webkit-scrollbar { width: 2px; }
-  .called-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .called-chip {
-    padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
-    background: var(--card2); border: 1px solid var(--border);
-  }
-
-  /* Screens */
-  .screen { display: none; }
-  .screen.active { display: block; }
-
-  /* Bottom CTA */
-  .bottom-cta {
-    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 100%; max-width: 420px; padding: 12px;
-    background: linear-gradient(to top, var(--bg) 60%, transparent);
-    z-index: 50;
-  }
-
-  /* Win Overlay */
-  .overlay { position: fixed; inset:0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 100; display: none; align-items: center; justify-content: center; }
-  .overlay.active { display: flex; }
-  .overlay-card { background: var(--card); border: 2px solid var(--gold); border-radius: 24px; padding: 32px; text-align: center; width: 90%; max-width: 320px; animation: popIn 0.4s ease; }
-
-  /* Floating BINGO letters */
-  .float-l { display: inline-block; animation: floatL 2.5s ease-in-out infinite; }
-  @keyframes floatL { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+/* WINNER SCREEN */
+.winner-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;background:var(--bg);}
+.winner-trophy{font-size:72px;animation:bounce .5s ease infinite alternate;}
+@keyframes bounce{from{transform:translateY(0);}to{transform:translateY(-12px);}}
+.winner-title{font-size:28px;font-weight:900;color:var(--yellow);letter-spacing:4px;margin:12px 0 4px;}
+.winner-name{font-size:22px;font-weight:700;color:var(--green);margin:8px 0;}
+.winner-card{font-size:14px;color:var(--muted);margin-bottom:16px;}
+.winner-card span{color:var(--orange);font-weight:700;}
+.prize-box{background:var(--bg2);border:2px solid var(--yellow);border-radius:16px;padding:16px 32px;margin:12px 0;}
+.prize-label{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.prize-amount{font-size:36px;font-weight:900;color:var(--yellow);}
+.prize-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.distribute-bar{width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;margin:16px 0 8px;overflow:hidden;}
+.distribute-fill{height:100%;background:var(--yellow);border-radius:4px;width:100%;transition:width 1s linear;}
+.next-label{font-size:13px;color:var(--muted);}
+.next-count{font-size:22px;font-weight:700;color:var(--orange);}
 </style>
-</head>
-<body>
 
 <div class="app">
 
-  <!-- ========== LOBBY / CARTELA SELECT ========== -->
-  <div class="screen active" id="lobbyScreen">
-
-    <!-- Title -->
-    <div class="text-center pt-2 pb-3">
-      <div class="font-display font-black text-3xl tracking-tight">
-        <span class="text-accent float-l" style="animation-delay:0s">B</span>
-        <span class="text-gold float-l" style="animation-delay:0.15s">I</span>
-        <span class="text-green float-l" style="animation-delay:0.3s">N</span>
-        <span class="text-purple-400 float-l" style="animation-delay:0.45s">G</span>
-        <span class="text-cyan-400 float-l" style="animation-delay:0.6s">O</span>
-      </div>
-      <p class="text-muted text-xs tracking-widest uppercase mt-1">Adwa Bingo Hall</p>
+  <!-- ══ SCREEN 1: SELECT ══ -->
+  <div class="screen active" id="screen-select">
+    <div class="topbar">
+      <div class="stat-box"><div class="stat-label">BALANCE(ካሳ)</div><div class="stat-val green">—</div></div>
+      <div class="stat-box"><div class="stat-label">BET(ወዲ)</div><div class="stat-val">10</div></div>
+      <div class="stat-box"><div class="stat-label">WIN(ሸለ)</div><div class="stat-val green" id="s-win-sel">0</div></div>
+      <div class="stat-box"><div class="stat-label">TIME LEFT</div><div class="stat-val yellow" id="s-time">35s</div></div>
     </div>
-
-    <!-- Top Stats -->
-    <div class="top-bar">
-      <div class="top-stat">
-        <div class="ts-label">Balance</div>
-        <div class="ts-val text-green" id="dispBalance">0</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Bet</div>
-        <div class="ts-val text-accent" id="dispBet">0</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Win</div>
-        <div class="ts-val text-gold" id="dispWin">176</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Time</div>
-        <div class="ts-val text-orange" id="dispTime">29s</div>
-      </div>
+    <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>አስከ 2 ካርቴላ ወሙሮ ይቅሩ</div>
+    <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
+    <div class="bottom-bar">
+      <div class="selected-info">Selected: <strong id="sel-count">0</strong> / 2</div>
+      <button class="play-btn" id="play-btn" onclick="startGame()">▶ PLAY</button>
     </div>
+  </div>
 
-    <!-- Selection Info -->
-    <div class="select-bar">
-      <div class="sb-left">
-        <div class="sb-icon" id="sbIcon">0</div>
-        <div>
-          <div class="text-sm font-bold">Select Cartela</div>
-          <div class="text-xs text-muted">You can select up to 2 cards</div>
+  <!-- ══ SCREEN 2: GAME ══ -->
+  <div class="screen" id="screen-game">
+    <div class="topbar">
+      <div class="stat-box"><div class="stat-label">WIN(ሸለ)</div><div class="stat-val green" id="s-win-game">0</div></div>
+      <div class="stat-box"><div class="stat-label">PLAYERS(ተጫዋቾ)</div><div class="stat-val" id="s-players">187</div></div>
+      <div class="stat-box"><div class="stat-label">BET(ወዲ)</div><div class="stat-val">10</div></div>
+      <div class="stat-box"><div class="stat-label">CALL(ቁጥር)</div><div class="stat-val yellow" id="s-call">0</div></div>
+    </div>
+    <div class="main">
+      <div class="left-col">
+        <div class="bingo-header-row">
+          <div class="bh B">B</div><div class="bh I">I</div><div class="bh N">N</div><div class="bh G">G</div><div class="bh O">O</div>
         </div>
+        <div class="num-grid" id="num-grid"></div>
       </div>
-      <div class="text-right">
-        <div class="text-xs text-muted">Selected</div>
-        <div class="font-bold text-orange" id="selCount">0 / 2</div>
-      </div>
-    </div>
-
-    <!-- Cartela Grid -->
-    <div class="cartela-grid" id="cartelaGrid">
-      <!-- 1 to 60 injected by JS -->
-    </div>
-
-    <!-- Bottom CTA -->
-    <div class="bottom-cta">
-      <div class="text-center text-xs text-muted mb-2" id="ctaHint">Tap numbers above to select your cards</div>
-      <button class="btn btn-primary" id="buyBtn" disabled onclick="startGame()">
-        🎲 Buy & Play
-      </button>
-    </div>
-  </div>
-
-  <!-- ========== GAME SCREEN ========== -->
-  <div class="screen" id="gameScreen">
-
-    <!-- Caller -->
-    <div class="caller-box">
-      <div class="text-xs text-muted uppercase tracking-widest mb-1">Current Call</div>
-      <div class="called-num font-display" id="callerNum">-</div>
-      <div class="flex justify-around text-xs text-muted mt-2">
-        <span>Called: <span class="text-fg font-bold" id="calledCount">0</span></span>
-        <span>Left: <span class="text-fg font-bold" id="leftCount">75</span></span>
-      </div>
-      <div class="called-strip" id="calledStrip"></div>
-    </div>
-
-    <!-- Game Stats -->
-    <div class="top-bar">
-      <div class="top-stat">
-        <div class="ts-label">Cards</div>
-        <div class="ts-val text-gold" id="activeCards">1</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Lines</div>
-        <div class="ts-val text-green" id="linesFound">0</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Prize</div>
-        <div class="ts-val text-gold">176</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Status</div>
-        <div class="ts-val text-accent" id="gameStatus">Live</div>
+      <div class="right-col">
+        <div class="recent-balls" id="recent-balls"></div>
+        <div class="current-box">
+          <div class="current-label">Current</div>
+          <div class="current-ball-big" id="current-big" style="background:#333;color:#fff;margin:auto;">
+            <span class="cbl" id="cb-letter">-</span>
+            <span class="cbn" id="cb-num">-</span>
+          </div>
+        </div>
+        <div class="auto-row">
+          <span class="auto-lbl">Automatic</span>
+          <div class="toggle on" id="auto-toggle" onclick="toggleAuto()"></div>
+        </div>
+        <div class="card-box" id="card1-box">
+          <div class="card-id-lbl">CARD: <span id="card1-id">—</span></div>
+          <div class="card-hdr" id="card1-header"></div>
+          <div class="card-grid" id="card1-grid"></div>
+        </div>
+        <div class="card-box" id="card2-box" style="display:none;">
+          <div class="card-id-lbl">CARD: <span id="card2-id">—</span></div>
+          <div class="card-hdr" id="card2-header"></div>
+          <div class="card-grid" id="card2-grid"></div>
+        </div>
+        <div class="no-card" id="no-card-slot"><span style="font-size:11px;color:var(--muted);letter-spacing:1px;">NO CARD</span></div>
       </div>
     </div>
-
-    <!-- Cards Container -->
-    <div id="cardsContainer" class="flex flex-col gap-3 mb-4">
-      <!-- Cards injected by JS -->
-    </div>
-
-    <!-- Bottom CTA Game -->
-    <div class="bottom-cta">
-      <button class="btn btn-gold" id="bingoBtn" onclick="claimBingo()" disabled>🏆 Claim BINGO</button>
+    <div class="bottom-btns">
+      <button class="bb leave" onclick="leaveGame()">⬅ LEAVE</button>
+      <button class="bb reload" onclick="reloadCards()">↺ RELOAD</button>
+      <button class="bb auto-bb active" id="auto-bb" onclick="toggleAutoBtn()">♛ AUTO</button>
     </div>
   </div>
 
-</div>
-
-<!-- Win Overlay -->
-<div class="overlay" id="winOverlay">
-  <div class="overlay-card">
-    <div class="font-display font-black text-5xl text-gold mb-2">BINGO!</div>
-    <p class="text-muted mb-4" id="winMsg">You won the prize!</p>
-    <div class="top-bar mb-4">
-      <div class="top-stat">
-        <div class="ts-label">Lines</div>
-        <div class="ts-val text-green" id="winLines">0</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Cards</div>
-        <div class="ts-val text-gold" id="winCards">0</div>
-      </div>
-      <div class="top-stat">
-        <div class="ts-label">Prize</div>
-        <div class="ts-val text-accent" id="winPrize">0</div>
-      </div>
+  <!-- ══ SCREEN 3: WINNER ══ -->
+  <div class="screen" id="screen-winner">
+    <div class="topbar">
+      <div class="stat-box"><div class="stat-label">ROUND</div><div class="stat-val yellow" id="w-round">1</div></div>
+      <div class="stat-box"><div class="stat-label">TOTAL PLAYERS</div><div class="stat-val" id="w-players">187</div></div>
+      <div class="stat-box"><div class="stat-label">BET(ወዲ)</div><div class="stat-val">10</div></div>
     </div>
-    <button class="btn btn-primary" onclick="backToLobby()">🔄 Play Again</button>
+    <div class="winner-screen">
+      <div class="winner-trophy">🏆</div>
+      <div class="winner-title">BINGO! WINNER!</div>
+      <div class="winner-name" id="w-name">Abebe</div>
+      <div class="winner-card">Card Number: <span id="w-card">—</span></div>
+      <div class="prize-box">
+        <div class="prize-label">Prize Distributed</div>
+        <div class="prize-amount" id="w-prize">0 ብር</div>
+        <div class="prize-sub">(80% of total pot)</div>
+      </div>
+      <div class="distribute-bar"><div class="distribute-fill" id="dist-fill"></div></div>
+      <div class="next-label">Next round starts in</div>
+      <div class="next-count" id="next-count">5</div>
+    </div>
   </div>
+
 </div>
 
 <script>
-  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-  if (tg) { tg.ready(); tg.expand(); }
+const COLS=['B','I','N','G','O'];
+const COL_COLORS={B:'var(--green)',I:'var(--blue)',N:'var(--purple)',G:'var(--pink)',O:'var(--orange)'};
+const COL_TEXT={B:'#000',I:'#000',N:'#fff',G:'#fff',O:'#000'};
 
-  // --- State ---
-  let selectedCartelas = [];  // Array of selected cartela numbers (1-60)
-  let cards = [];
-  let calledNumbers = [];
-  let gameInterval = null;
-  let gameOver = false;
-  let totalLines = 0;
-  let winningCells = [];
-  let countdownInterval = null;
+// fake telegram names for demo — you replace with real Telegram API
+const FAKE_NAMES=['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
 
-  const TOTAL_CARTELAS = 60;
-  const MAX_SELECT = 2;
-  const BET_PER_CARD = 10;
-  const PRIZE_PER_LINE = 88;
-  const RANGES = [[1,15],[16,30],[31,45],[46,60],[61,75]];
-  const LETTERS = ['B','I','N','G','O'];
+let selCards=new Set();
+let timeLeft=35;
+let timerIv=null;
+let round=1;
 
-  // Simulate some "taken" cartelas (other players in the room)
-  const takenCartelas = new Set();
-  while (takenCartelas.size < 18) {
-    takenCartelas.add(Math.floor(Math.random() * TOTAL_CARTELAS) + 1);
+let game={
+  called:new Set(),current:null,recentBalls:[],
+  autoRunning:true,autoIv:null,callCount:0,
+  cards:[],marked:[],wonLines:[],cardNums:[],
+  winAmount:0, totalPlayers:187
+};
+
+/* ══ SELECT ══ */
+function buildGrid(){
+  const g=document.getElementById('cards-grid');
+  let h='';
+  for(let i=1;i<=400;i++) h+=`<div class="card-cell" id="cc-${i}" onclick="toggleCard(${i})">${i}</div>`;
+  g.innerHTML=h;
+}
+
+function toggleCard(n){
+  if(selCards.has(n)){
+    selCards.delete(n);
+    document.getElementById('cc-'+n).classList.remove('selected');
+  } else {
+    if(selCards.size>=2) return;
+    selCards.add(n);
+    document.getElementById('cc-'+n).classList.add('selected');
+  }
+  if(selCards.size>=2){
+    for(let i=1;i<=400;i++) if(!selCards.has(i)) document.getElementById('cc-'+i).classList.add('disabled');
+  } else {
+    for(let i=1;i<=400;i++) document.getElementById('cc-'+i).classList.remove('disabled');
+    selCards.forEach(s=>document.getElementById('cc-'+s).classList.add('selected'));
+  }
+  document.getElementById('sel-count').textContent=selCards.size;
+  updateWinDisplay();
+  document.getElementById('play-btn').classList.toggle('ready',selCards.size>0);
+}
+
+function updateWinDisplay(){
+  const win=Math.round(selCards.size*10*0.8);
+  document.getElementById('s-win-sel').textContent=win+' ብር';
+  document.getElementById('s-win-game').textContent=win+' ብር';
+}
+
+function startTimer(){
+  clearInterval(timerIv);
+  timeLeft=35;
+  const el=document.getElementById('s-time');
+  el.textContent='35s'; el.style.color='var(--yellow)';
+  timerIv=setInterval(()=>{
+    timeLeft--;
+    el.textContent=timeLeft+'s';
+    el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
+    if(timeLeft<=0){clearInterval(timerIv);startGame();}
+  },1000);
+}
+
+function startGame(){
+  clearInterval(timerIv);
+  const cardNums=Array.from(selCards);
+  if(cardNums.length===0) cardNums.push(Math.floor(Math.random()*400)+1);
+  game.cardNums=cardNums;
+  game.cards=cardNums.map(()=>generateCard());
+  game.marked=game.cards.map(()=>new Set([12]));
+  game.wonLines=game.cards.map(()=>new Set());
+  game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;
+  game.winAmount=Math.round(selCards.size*10*0.8);
+  game.totalPlayers=Math.floor(Math.random()*200)+50;
+
+  document.getElementById('s-players').textContent=game.totalPlayers;
+  document.getElementById('card1-id').textContent=cardNums[0];
+  renderCardHeader('card1-header');
+  if(cardNums.length>=2){
+    document.getElementById('card2-id').textContent=cardNums[1];
+    renderCardHeader('card2-header');
+    document.getElementById('card2-box').style.display='block';
+    document.getElementById('no-card-slot').style.display='none';
+  } else {
+    document.getElementById('card2-box').style.display='none';
+    document.getElementById('no-card-slot').style.display='flex';
   }
 
-  // --- Init Lobby ---
-  function initLobby() {
-    const grid = document.getElementById('cartelaGrid');
-    grid.innerHTML = '';
-    selectedCartelas = [];
-    updateSelectionUI();
+  showScreen('screen-game');
+  renderNumGrid(); renderAllCards();
+  if(game.autoRunning) startAutoGame();
+}
 
-    for (let i = 1; i <= TOTAL_CARTELAS; i++) {
-      const cell = document.createElement('div');
-      cell.className = 'cartela-cell';
-      cell.dataset.num = i;
-      cell.textContent = i;
-
-      if (takenCartelas.has(i)) {
-        cell.classList.add('taken');
-      } else {
-        cell.addEventListener('click', () => toggleCartela(i, cell));
-      }
-      grid.appendChild(cell);
-    }
-
-    // Start lobby countdown
-    startLobbyCountdown();
+/* ══ GAME ══ */
+function generateCard(){
+  const card=[];
+  for(let c=0;c<5;c++){
+    const min=c*15+1,max=c*15+15,pool=[];
+    for(let i=min;i<=max;i++) pool.push(i);
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    for(let r=0;r<5;r++) card.push({c,r,n:pool[r]});
   }
+  card[12]={c:2,r:2,n:'★'};
+  return card;
+}
 
-  function toggleCartela(num, cell) {
-    const idx = selectedCartelas.indexOf(num);
-    if (idx > -1) {
-      // Deselect
-      selectedCartelas.splice(idx, 1);
-      cell.classList.remove('selected');
-    } else {
-      if (selectedCartelas.length >= MAX_SELECT) {
-        // Shake to indicate max reached
-        cell.style.animation = 'none';
-        void cell.offsetWidth;
-        cell.style.animation = '';
-        if (tg) tg.HapticFeedback.notificationOccurred('error');
-        return;
-      }
-      selectedCartelas.push(num);
-      cell.classList.add('selected');
-      if (tg) tg.HapticFeedback.impactOccurred('light');
-    }
-    updateSelectionUI();
-  }
+function colFor(n){return Math.floor((n-1)/15);}
+function letterFor(n){return COLS[colFor(n)];}
 
-  function updateSelectionUI() {
-    const count = selectedCartelas.length;
-    document.getElementById('selCount').textContent = `${count} / ${MAX_SELECT}`;
-    document.getElementById('sbIcon').textContent = count;
-    document.getElementById('dispBet').textContent = count * BET_PER_CARD;
-    document.getElementById('buyBtn').disabled = count === 0;
-    document.getElementById('ctaHint').textContent = 
-      count === 0 ? 'Tap numbers above to select your cards' :
-      count === 1 ? `Card #${selectedCartelas[0]} selected — pick 1 more or play!` :
-      `Cards #${selectedCartelas[0]} & #${selectedCartelas[1]} selected!`;
-  }
-
-  let lobbyTime = 29;
-  function startLobbyCountdown() {
-    lobbyTime = 29;
-    if (countdownInterval) clearInterval(countdownInterval);
-    document.getElementById('dispTime').textContent = lobbyTime + 's';
-    countdownInterval = setInterval(() => {
-      lobbyTime--;
-      if (lobbyTime < 0) lobbyTime = 29; // Reset loop for demo
-      document.getElementById('dispTime').textContent = lobbyTime + 's';
-    }, 1000);
-  }
-
-  // --- Start Game ---
-  function startGame() {
-    if (selectedCartelas.length === 0) return;
-    if (countdownInterval) clearInterval(countdownInterval);
-
-    cards = [];
-    calledNumbers = [];
-    gameOver = false;
-    totalLines = 0;
-    winningCells = [];
-
-    // Generate cards from selected cartelas
-    selectedCartelas.forEach(cartelaNum => {
-      const grid = generateGrid();
-      const marked = Array(5).fill().map(() => Array(5).fill(false));
-      marked[2][2] = true;
-      cards.push({ id: cartelaNum, grid, marked });
-    });
-
-    switchScreen('gameScreen');
-    document.getElementById('activeCards').textContent = selectedCartelas.length;
-    document.getElementById('linesFound').textContent = '0';
-    document.getElementById('gameStatus').textContent = 'Live';
-    document.getElementById('bingoBtn').disabled = true;
-    document.getElementById('calledStrip').innerHTML = '';
-
-    renderCards();
-    startCaller();
-  }
-
-  function generateGrid() {
-    const grid = [];
-    for (let col = 0; col < 5; col++) {
-      const [min, max] = RANGES[col];
-      const pool = [];
-      for (let n = min; n <= max; n++) pool.push(n);
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
-      }
-      grid.push(pool.slice(0, 5));
-    }
-    return grid;
-  }
-
-  function renderCards() {
-    const container = document.getElementById('cardsContainer');
-    container.innerHTML = '';
-
-    cards.forEach((card, index) => {
-      const cardEl = document.createElement('div');
-      cardEl.className = 'box';
-
-      let html = `<div class="flex justify-between items-center mb-1">
-        <span class="text-xs text-muted uppercase tracking-widest font-bold">Cartela #${card.id}</span>
-        <span class="text-xs text-orange font-bold">${BET_PER_CARD} ETB</span>
-      </div>`;
-
-      html += `<div class="bingo-grid">`;
-      LETTERS.forEach((l) => html += `<div class="bingo-cell header header-${l.toLowerCase()}">${l}</div>`);
-
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-          const isFree = (row === 2 && col === 2);
-          const isMarked = card.marked[col][row];
-          const isWinning = winningCells.some(c => c.cardIdx === index && c.col === col && c.row === row);
-
-          let classes = 'bingo-cell';
-          if (isFree) classes += ' free marked';
-          else if (isWinning) classes += ' winning marked';
-          else if (isMarked) classes += ' marked';
-
-          const text = isFree ? 'FREE' : card.grid[col][row];
-          html += `<div class="${classes}">${text}</div>`;
-        }
-      }
-      html += `</div>`;
-      cardEl.innerHTML = html;
-      container.appendChild(cardEl);
-    });
-  }
-
-  // --- Caller ---
-  function startCaller() {
-    if (gameInterval) clearInterval(gameInterval);
-    callNumber();
-    gameInterval = setInterval(() => {
-      if (calledNumbers.length >= 75 || gameOver) { clearInterval(gameInterval); return; }
-      callNumber();
-    }, 3000);
-  }
-
-  function callNumber() {
-    const available = [];
-    for (let n = 1; n <= 75; n++) {
-      if (!calledNumbers.includes(n)) available.push(n);
-    }
-    if (available.length === 0) return;
-
-    const num = available[Math.floor(Math.random() * available.length)];
-    calledNumbers.push(num);
-
-    let letterIdx = 0;
-    for (let i = 0; i < RANGES.length; i++) {
-      if (num >= RANGES[i][0] && num <= RANGES[i][1]) { letterIdx = i; break; }
-    }
-    const letter = LETTERS[letterIdx];
-
-    const display = document.getElementById('callerNum');
-    display.innerHTML = `<span class="text-muted text-xl">${letter}</span> ${num}`;
-    display.classList.remove('pop');
-    void display.offsetWidth;
-    display.classList.add('pop');
-
-    document.getElementById('calledCount').textContent = calledNumbers.length;
-    document.getElementById('leftCount').textContent = 75 - calledNumbers.length;
-
-    // Add chip to strip
-    const strip = document.getElementById('calledStrip');
-    const chip = document.createElement('span');
-    chip.className = 'called-chip';
-    chip.innerHTML = `<span class="text-muted" style="font-size:8px">${letter}</span>${num}`;
-    strip.insertBefore(chip, strip.firstChild);
-
-    autoDaub(num);
-    if (tg) tg.HapticFeedback.impactOccurred('light');
-  }
-
-  function autoDaub(calledNum) {
-    let changed = false;
-    cards.forEach((card) => {
-      for (let col = 0; col < 5; col++) {
-        for (let row = 0; row < 5; row++) {
-          if (row === 2 && col === 2) continue;
-          if (card.grid[col][row] === calledNum && !card.marked[col][row]) {
-            card.marked[col][row] = true;
-            changed = true;
-          }
-        }
-      }
-    });
-    if (changed) {
-      renderCards();
-      checkAllBingos();
+function renderNumGrid(){
+  const g=document.getElementById('num-grid');
+  let h='';
+  // 5 columns only: B(1-15), I(16-30), N(31-45), G(46-60), O(61-75)
+  // 15 rows
+  for(let row=1;row<=15;row++){
+    for(let ci=0;ci<5;ci++){
+      const n=ci*15+row;
+      const cls=game.current===n?'num-cell current':game.called.has(n)?'num-cell called':'num-cell';
+      h+=`<div class="${cls}" onclick="manualCall(${n})">${n}</div>`;
     }
   }
+  g.innerHTML=h;
+}
 
-  // --- Win Check ---
-  function checkAllBingos() {
-    let currentRoundLines = 0;
-    winningCells = [];
+function renderCardHeader(id){
+  document.getElementById(id).innerHTML=COLS.map(L=>`<div class="ch ${L}">${L}</div>`).join('');
+}
 
-    cards.forEach((card, cardIdx) => {
-      // Rows
-      for (let row = 0; row < 5; row++) {
-        let complete = true;
-        let lineCells = [];
-        for (let col = 0; col < 5; col++) {
-          if (!card.marked[col][row]) { complete = false; break; }
-          lineCells.push({cardIdx, col, row});
-        }
-        if (complete) { currentRoundLines++; winningCells.push(...lineCells); }
-      }
-      // Cols
-      for (let col = 0; col < 5; col++) {
-        let complete = true;
-        let lineCells = [];
-        for (let row = 0; row < 5; row++) {
-          if (!card.marked[col][row]) { complete = false; break; }
-          lineCells.push({cardIdx, col, row});
-        }
-        if (complete) { currentRoundLines++; winningCells.push(...lineCells); }
-      }
-      // Diag 1
-      let d1 = true, d1c = [];
-      for (let i = 0; i < 5; i++) { if (!card.marked[i][i]) { d1 = false; break; } d1c.push({cardIdx, col:i, row:i}); }
-      if (d1) { currentRoundLines++; winningCells.push(...d1c); }
-      // Diag 2
-      let d2 = true, d2c = [];
-      for (let i = 0; i < 5; i++) { if (!card.marked[4-i][i]) { d2 = false; break; } d2c.push({cardIdx, col:4-i, row:i}); }
-      if (d2) { currentRoundLines++; winningCells.push(...d2c); }
-    });
+function renderCard(ci){
+  const gid=ci===0?'card1-grid':'card2-grid';
+  const grid=document.getElementById(gid);
+  if(!grid||!game.cards[ci]) return;
+  const wins=new Set();
+  game.wonLines[ci].forEach(line=>line.forEach(i=>wins.add(i)));
+  grid.innerHTML=game.cards[ci].map((cell,idx)=>{
+    const isFree=cell.n==='★';
+    const isMarked=game.marked[ci].has(idx);
+    const isWin=wins.has(idx);
+    const cls=isWin?'cc win-cell':isFree?'cc free':isMarked?'cc marked':'cc';
+    return `<div class="${cls}" onclick="tapCard(${ci},${idx})">${cell.n}</div>`;
+  }).join('');
+}
 
-    if (currentRoundLines > totalLines) {
-      totalLines = currentRoundLines;
-      document.getElementById('linesFound').textContent = totalLines;
-      document.getElementById('bingoBtn').disabled = false;
-      renderCards();
-      if (tg) tg.HapticFeedback.notificationOccurred('success');
+function renderAllCards(){for(let ci=0;ci<game.cards.length;ci++) renderCard(ci);}
+
+function renderRecentBalls(){
+  document.getElementById('recent-balls').innerHTML=game.recentBalls.slice(-4).map(n=>{
+    const L=letterFor(n);
+    return `<div class="rball" style="background:${COL_COLORS[L]};color:${COL_TEXT[L]}"><span class="rl">${L}</span><span class="rn">${n}</span></div>`;
+  }).join('');
+}
+
+function renderCurrentBall(){
+  if(!game.current) return;
+  const n=game.current,L=letterFor(n);
+  const el=document.getElementById('current-big');
+  el.style.background=COL_COLORS[L];el.style.color=COL_TEXT[L];
+  el.style.boxShadow=`0 0 20px ${COL_COLORS[L]}`;
+  document.getElementById('cb-letter').textContent=L+'-';
+  document.getElementById('cb-num').textContent=n;
+}
+
+function drawBall(){
+  if(game.called.size>=75){triggerWinner();return;}
+  const pool=[];
+  for(let i=1;i<=75;i++) if(!game.called.has(i)) pool.push(i);
+  const n=pool[Math.floor(Math.random()*pool.length)];
+  game.called.add(n);game.current=n;
+  game.recentBalls.push(n);
+  if(game.recentBalls.length>8) game.recentBalls.shift();
+  game.callCount++;
+  document.getElementById('s-call').textContent=game.callCount;
+  game.cards.forEach((card,ci)=>{
+    card.forEach((cell,idx)=>{if(cell.n===n) game.marked[ci].add(idx);});
+    if(checkWin(ci)) return;
+  });
+  renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
+}
+
+function manualCall(n){
+  if(game.called.has(n)) return;
+  game.called.add(n);game.current=n;
+  game.recentBalls.push(n);
+  if(game.recentBalls.length>8) game.recentBalls.shift();
+  game.callCount++;
+  document.getElementById('s-call').textContent=game.callCount;
+  game.cards.forEach((card,ci)=>{
+    card.forEach((cell,idx)=>{if(cell.n===n) game.marked[ci].add(idx);});
+    checkWin(ci);
+  });
+  renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
+}
+
+function tapCard(ci,idx){
+  if(idx===12) return;
+  if(game.marked[ci].has(idx)) game.marked[ci].delete(idx);
+  else game.marked[ci].add(idx);
+  checkWin(ci);renderCard(ci);
+}
+
+function checkWin(ci){
+  const lines=[];
+  for(let r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
+  for(let c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
+  lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);
+  const prev=game.wonLines[ci].size;
+  const nw=new Set();
+  lines.forEach(line=>{if(line.every(i=>game.marked[ci].has(i))) nw.add(line);});
+  game.wonLines[ci]=nw;
+  if(nw.size>prev){
+    stopAutoGame();
+    triggerWinner(ci);
+    return true;
+  }
+  return false;
+}
+
+function triggerWinner(ci){
+  stopAutoGame();
+  // pick a winner: if player won use their info, else simulate random winner
+  const isPlayer = ci !== undefined;
+  const winnerName = isPlayer
+    ? 'You' // replace with real Telegram firstName
+    : FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
+  const winnerCard = isPlayer
+    ? game.cardNums[ci]
+    : Math.floor(Math.random()*400)+1;
+  const totalPot = game.totalPlayers * 10;
+  const prize = Math.round(totalPot * 0.8);
+
+  document.getElementById('w-round').textContent=round;
+  document.getElementById('w-players').textContent=game.totalPlayers;
+  document.getElementById('w-name').textContent=winnerName;
+  document.getElementById('w-card').textContent='#'+winnerCard;
+  document.getElementById('w-prize').textContent=prize+' ብር';
+
+  showScreen('screen-winner');
+
+  // 5 second countdown + shrink bar
+  const fill=document.getElementById('dist-fill');
+  const countEl=document.getElementById('next-count');
+  fill.style.transition='none';
+  fill.style.width='100%';
+  setTimeout(()=>{
+    fill.style.transition='width 5s linear';
+    fill.style.width='0%';
+  },50);
+
+  let nc=5;
+  countEl.textContent=nc;
+  const wIv=setInterval(()=>{
+    nc--;
+    countEl.textContent=nc;
+    if(nc<=0){
+      clearInterval(wIv);
+      round++;
+      newRound();
     }
+  },1000);
+}
+
+function newRound(){
+  selCards=new Set();
+  for(let i=1;i<=400;i++){
+    const el=document.getElementById('cc-'+i);
+    if(el) el.classList.remove('selected','disabled');
   }
+  document.getElementById('sel-count').textContent='0';
+  document.getElementById('s-win-sel').textContent='0';
+  document.getElementById('play-btn').classList.remove('ready');
+  showScreen('screen-select');
+  startTimer();
+}
 
-  function claimBingo() {
-    if (totalLines === 0 || gameOver) return;
-    gameOver = true;
-    clearInterval(gameInterval);
+function leaveGame(){
+  stopAutoGame();
+  newRound();
+}
 
-    document.getElementById('gameStatus').textContent = 'Won!';
-    document.getElementById('bingoBtn').disabled = true;
+function reloadCards(){
+  game.cards=game.cards.map(()=>generateCard());
+  game.marked=game.cards.map(()=>new Set([12]));
+  game.wonLines=game.cards.map(()=>new Set());
+  game.called.forEach(n=>{
+    game.cards.forEach((card,ci)=>card.forEach((cell,idx)=>{if(cell.n===n) game.marked[ci].add(idx);}));
+  });
+  game.cards.forEach((_,ci)=>checkWin(ci));
+  renderAllCards();
+}
 
-    const totalPrize = totalLines * PRIZE_PER_LINE;
+function toggleAuto(){
+  game.autoRunning=!game.autoRunning;
+  document.getElementById('auto-toggle').classList.toggle('on',game.autoRunning);
+  if(game.autoRunning) startAutoGame(); else stopAutoGame();
+}
+function toggleAutoBtn(){
+  toggleAuto();
+  document.getElementById('auto-bb').classList.toggle('active',game.autoRunning);
+}
+function startAutoGame(){
+  stopAutoGame();
+  game.autoIv=setInterval(()=>{
+    if(!game.autoRunning||game.called.size>=75){stopAutoGame();return;}
+    drawBall();
+  },2000);
+}
+function stopAutoGame(){clearInterval(game.autoIv);game.autoIv=null;}
 
-    document.getElementById('winOverlay').classList.add('active');
-    document.getElementById('winMsg').textContent = `You hit BINGO on your cartela!`;
-    document.getElementById('winLines').textContent = totalLines;
-    document.getElementById('winCards').textContent = selectedCartelas.length;
-    document.getElementById('winPrize').textContent = totalPrize;
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
-    if (tg) {
-      tg.HapticFeedback.notificationOccurred('success');
-      const winData = {
-        action: 'bingo_win',
-        lines: totalLines,
-        cards_played: selectedCartelas.length,
-        cartela_ids: selectedCartelas,
-        prize: totalPrize
-      };
-      tg.sendData(JSON.stringify(winData));
-    }
+buildGrid();
+startTimer();
+
+// demo: after 20s simulate a winner if nobody won
+setTimeout(()=>{
+  if(document.getElementById('screen-game').classList.contains('active')){
+    triggerWinner();
   }
-
-  function backToLobby() {
-    document.getElementById('winOverlay').classList.remove('active');
-    switchScreen('lobbyScreen');
-    initLobby();
-  }
-
-  function switchScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-  }
-
-  // --- Init ---
-  initLobby();
+},20000);
 </script>
-</body>
-</html>
