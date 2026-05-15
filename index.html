@@ -32,8 +32,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .bottom-bar{background:var(--bg2);padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
 .selected-info{flex:1;font-size:12px;color:var(--muted);}
 .selected-info strong{color:var(--text);font-size:14px;}
-
-/* INSUFFICIENT BALANCE */
 .no-balance-msg{background:#e74c3c;color:#fff;text-align:center;padding:8px 12px;font-size:11px;font-weight:600;display:none;}
 
 /* GAME SCREEN */
@@ -50,7 +48,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .num-cell{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1.5px solid rgba(255,107,53,0.4);transition:all .2s;}
 .num-cell.called{color:#000;border-color:transparent;}
 .num-cell.current{color:#000;border-color:transparent;transform:scale(1.08);}
-
 .right-col{width:168px;padding:8px 8px 8px 4px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
 .recent-balls{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
 .rball{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-direction:column;}
@@ -119,6 +116,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .distribute-fill{height:100%;background:var(--yellow);border-radius:4px;width:100%;transition:width 1s linear;}
 .next-label{font-size:13px;color:var(--muted);}
 .next-count{font-size:22px;font-weight:700;color:var(--orange);}
+
+/* DEBUG */
+.debug-bar{background:#333;color:#ff0;font-size:10px;padding:4px 8px;text-align:center;display:none;}
 </style>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -128,12 +128,13 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
   <!-- ══ SCREEN 1: SELECT ══ -->
   <div class="screen active" id="screen-select">
     <div class="topbar">
-      <div class="stat-box"><div class="stat-label">BALANCE(ሂሳብ)</div><div class="stat-val green" id="s-balance">—</div></div>
-      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val" id="s-bet">10</div></div>
-      <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="s-win-sel">0</div></div>
+      <div class="stat-box"><div class="stat-label">MAIN(ዋና)</div><div class="stat-val green" id="s-main">—</div></div>
+      <div class="stat-box"><div class="stat-label">PLAY(ጨዋታ)</div><div class="stat-val green" id="s-play">—</div></div>
+      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val orange" id="s-bet">0</div></div>
       <div class="stat-box"><div class="stat-label">TIME LEFT</div><div class="stat-val yellow" id="s-time">35s</div></div>
     </div>
-    <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient balance! Deposit first. በቂ ሂሳብ የለም!</div>
+    <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient PLAY balance! Deposit first. በቂ ሂሳብ የለም!</div>
+    <div class="debug-bar" id="debug-bar">Loading...</div>
     <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
     <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
     <div class="bottom-bar">
@@ -146,7 +147,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
     <div class="topbar">
       <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="s-win-game">0</div></div>
       <div class="stat-box"><div class="stat-label">PLAYERS(ተጫዋቾች)</div><div class="stat-val" id="s-players">0</div></div>
-      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val">10</div></div>
+      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val orange" id="s-bet-game">10</div></div>
       <div class="stat-box"><div class="stat-label">CALL(የተጠሩ)</div><div class="stat-val yellow" id="s-call">0</div></div>
     </div>
     <div class="main">
@@ -223,11 +224,12 @@ const COL_COLORS={B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
 const COL_TEXT={B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
 const FAKE_NAMES=['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
 
-const API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+const API_BASE='https://dangling-seldom-sturdily.ngrok-free.dev';
 
-let tgUserId = null;
-let userPlayBalance = 0;
-let apiAvailable = false;
+let tgUserId=null;
+let userMainBalance=0;
+let userPlayBalance=0;
+let apiAvailable=false;
 
 let selCards=new Set();
 let timeLeft=35;
@@ -238,45 +240,67 @@ let game={
   called:new Set(),current:null,recentBalls:[],
   autoRunning:true,autoIv:null,callCount:0,
   cards:[],marked:[],wonLines:[],cardNums:[],
-  winAmount:0,totalPlayers:0,otherCartelas:0,
+  winAmount:0,totalPlayers:0,
   betDeducted:false
 };
+
+/* ══ DEBUG ══ */
+function showDebug(msg){
+  const el=document.getElementById('debug-bar');
+  if(el){el.style.display='block';el.textContent=msg;}
+}
 
 /* ══ TELEGRAM & API ══ */
 function initTelegram(){
   try{
-    if(window.Telegram && window.Telegram.WebApp){
+    if(window.Telegram&&window.Telegram.WebApp){
       const wa=window.Telegram.WebApp;
       wa.ready();
       wa.expand();
-      if(wa.initDataUnsafe && wa.initDataUnsafe.user){
+      if(wa.initDataUnsafe&&wa.initDataUnsafe.user){
         tgUserId=wa.initDataUnsafe.user.id;
+        showDebug('User ID: '+tgUserId);
+      }else{
+        showDebug('No user data in Telegram. Open from bot!');
       }
+    }else{
+      showDebug('Not in Telegram WebApp');
     }
-  }catch(e){}
+  }catch(e){
+    showDebug('Telegram init error: '+e.message);
+  }
 }
 
 async function fetchBalance(){
-  if(!tgUserId) return;
+  if(!tgUserId){
+    showDebug('No user ID - cannot fetch balance');
+    return;
+  }
+  showDebug('Fetching balance for user '+tgUserId+'...');
   try{
-    const res=await fetch(`${API_BASE}/api/balance?user_id=${tgUserId}`,{
+    const res=await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{
       headers:{'ngrok-skip-browser-warning':'true'}
     });
     const data=await res.json();
+    showDebug('API response: '+JSON.stringify(data));
     if(data.success){
+      userMainBalance=data.main_balance;
       userPlayBalance=data.play_balance;
       apiAvailable=true;
       updateBalanceDisplay();
+      showDebug('Balance loaded! Main:'+userMainBalance+' Play:'+userPlayBalance);
     }
   }catch(e){
+    showDebug('API ERROR: '+e.message);
     apiAvailable=false;
   }
 }
 
 function updateBalanceDisplay(){
-  document.getElementById('s-balance').textContent=userPlayBalance;
+  document.getElementById('s-main').textContent=userMainBalance;
+  document.getElementById('s-play').textContent=userPlayBalance;
   const msg=document.getElementById('no-balance-msg');
-  if(userPlayBalance<10 && apiAvailable){
+  if(userPlayBalance<10&&apiAvailable){
     msg.style.display='block';
   }else{
     msg.style.display='none';
@@ -286,13 +310,14 @@ function updateBalanceDisplay(){
 async function deductBet(amount){
   if(!tgUserId||!apiAvailable) return true;
   try{
-    const res=await fetch(`${API_BASE}/api/bet`,{
+    const res=await fetch(API_BASE+'/api/bet',{
       method:'POST',
       headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
       body:JSON.stringify({user_id:tgUserId,amount:amount})
     });
     const data=await res.json();
     if(data.success){
+      userMainBalance=data.main_balance;
       userPlayBalance=data.play_balance;
       updateBalanceDisplay();
       game.betDeducted=true;
@@ -309,13 +334,14 @@ async function deductBet(amount){
 async function reportWin(amount){
   if(!tgUserId||!apiAvailable) return;
   try{
-    const res=await fetch(`${API_BASE}/api/win`,{
+    const res=await fetch(API_BASE+'/api/win',{
       method:'POST',
       headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
       body:JSON.stringify({user_id:tgUserId,amount:amount})
     });
     const data=await res.json();
     if(data.success){
+      userMainBalance=data.main_balance;
       userPlayBalance=data.play_balance;
       updateBalanceDisplay();
     }
@@ -326,7 +352,7 @@ async function reportWin(amount){
 function buildGrid(){
   const g=document.getElementById('cards-grid');
   let h='';
-  for(let i=1;i<=400;i++) h+=`<div class="card-cell" id="cc-${i}" onclick="toggleCard(${i})">${i}</div>`;
+  for(let i=1;i<=400;i++) h+='<div class="card-cell" id="cc-'+i+'" onclick="toggleCard('+i+')">'+i+'</div>';
   g.innerHTML=h;
 }
 
@@ -336,7 +362,7 @@ function toggleCard(n){
     document.getElementById('cc-'+n).classList.remove('selected');
   }else{
     if(selCards.size>=2) return;
-    if(apiAvailable && selCards.size===1 && userPlayBalance<20){
+    if(apiAvailable&&selCards.size===1&&userPlayBalance<20){
       alert('⚠️ Insufficient balance for 2 cards! በቂ ሂሳብ የለም!');
       return;
     }
@@ -347,20 +373,12 @@ function toggleCard(n){
     for(let i=1;i<=400;i++) if(!selCards.has(i)) document.getElementById('cc-'+i).classList.add('disabled');
   }else{
     for(let i=1;i<=400;i++) document.getElementById('cc-'+i).classList.remove('disabled');
-    selCards.forEach(s=>document.getElementById('cc-'+s).classList.add('selected'));
+    selCards.forEach(function(s){document.getElementById('cc-'+s).classList.add('selected');});
   }
   document.getElementById('sel-count').textContent=selCards.size;
-  const betAmount=selCards.size*10;
+  var betAmount=selCards.size*10;
   document.getElementById('s-bet').textContent=betAmount;
-  updateWinDisplay();
-}
-
-function calcTotalPlayers(myCartelas){
-  return myCartelas;
-}
-
-function updateWinDisplay(){
-  const win=Math.round(selCards.size*10*0.8);
+  var win=Math.round(betAmount*0.8);
   document.getElementById('s-win-sel').textContent=win;
   document.getElementById('s-win-game').textContent=win;
 }
@@ -368,9 +386,9 @@ function updateWinDisplay(){
 function startTimer(){
   clearInterval(timerIv);
   timeLeft=35;
-  const el=document.getElementById('s-time');
-  el.textContent='35s'; el.style.color='var(--yellow)';
-  timerIv=setInterval(()=>{
+  var el=document.getElementById('s-time');
+  el.textContent='35s';el.style.color='var(--yellow)';
+  timerIv=setInterval(function(){
     timeLeft--;
     el.textContent=timeLeft+'s';
     el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
@@ -380,23 +398,24 @@ function startTimer(){
 
 async function startGame(){
   clearInterval(timerIv);
-  const cardNums=Array.from(selCards);
+  var cardNums=Array.from(selCards);
   if(cardNums.length===0) cardNums.push(Math.floor(Math.random()*400)+1);
 
-  const betAmount=cardNums.length*10;
-  const deducted=await deductBet(betAmount);
+  var betAmount=cardNums.length*10;
+  var deducted=await deductBet(betAmount);
   if(!deducted) return;
 
   game.cardNums=cardNums;
-  game.cards=cardNums.map(()=>generateCard());
-  game.marked=game.cards.map(()=>new Set([12]));
-  game.wonLines=game.cards.map(()=>new Set());
+  game.cards=cardNums.map(function(){return generateCard();});
+  game.marked=game.cards.map(function(){return new Set([12]);});
+  game.wonLines=game.cards.map(function(){return new Set();});
   game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;
   game.winAmount=Math.round(betAmount*0.8);
-  game.totalPlayers=calcTotalPlayers(cardNums.length);
+  game.totalPlayers=cardNums.length;
   game.betDeducted=true;
 
   document.getElementById('s-players').textContent=game.totalPlayers;
+  document.getElementById('s-bet-game').textContent=betAmount;
   document.getElementById('card1-id').textContent=cardNums[0];
   renderCardHeader('card1-header');
   if(cardNums.length>=2){
@@ -416,12 +435,12 @@ async function startGame(){
 
 /* ══ GAME ══ */
 function generateCard(){
-  const card=[];
-  for(let c=0;c<5;c++){
-    const min=c*15+1,max=c*15+15,pool=[];
-    for(let i=min;i<=max;i++) pool.push(i);
-    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-    for(let r=0;r<5;r++) card.push({c,r,n:pool[r]});
+  var card=[];
+  for(var c=0;c<5;c++){
+    var min=c*15+1,max=c*15+15,pool=[];
+    for(var i=min;i<=max;i++) pool.push(i);
+    for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=pool[i];pool[i]=pool[j];pool[j]=tmp;}
+    for(var r=0;r<5;r++) card.push({c:c,r:r,n:pool[r]});
   }
   card[12]={c:2,r:2,n:'★'};
   return card;
@@ -431,18 +450,18 @@ function colFor(n){return Math.floor((n-1)/15);}
 function letterFor(n){return COLS[colFor(n)];}
 
 function renderNumGrid(){
-  const g=document.getElementById('num-grid');
-  let h='';
-  for(let row=1;row<=15;row++){
-    for(let ci=0;ci<5;ci++){
-      const n=ci*15+row;
-      const L=COLS[ci];
+  var g=document.getElementById('num-grid');
+  var h='';
+  for(var row=1;row<=15;row++){
+    for(var ci=0;ci<5;ci++){
+      var n=ci*15+row;
+      var L=COLS[ci];
       if(game.current===n){
-        h+=`<div class="num-cell current" style="background:${COL_COLORS[L]};color:${COL_TEXT[L]};border-color:${COL_COLORS[L]};box-shadow:0 0 10px ${COL_COLORS[L]}">${n}</div>`;
+        h+='<div class="num-cell current" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+';border-color:'+COL_COLORS[L]+';box-shadow:0 0 10px '+COL_COLORS[L]+'">'+n+'</div>';
       }else if(game.called.has(n)){
-        h+=`<div class="num-cell called" style="background:${COL_COLORS[L]};color:${COL_TEXT[L]};border-color:${COL_COLORS[L]}">${n}</div>`;
+        h+='<div class="num-cell called" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+';border-color:'+COL_COLORS[L]+'">'+n+'</div>';
       }else{
-        h+=`<div class="num-cell">${n}</div>`;
+        h+='<div class="num-cell">'+n+'</div>';
       }
     }
   }
@@ -450,55 +469,55 @@ function renderNumGrid(){
 }
 
 function renderCardHeader(id){
-  document.getElementById(id).innerHTML=COLS.map(L=>`<div class="ch ${L}">${L}</div>`).join('');
+  document.getElementById(id).innerHTML=COLS.map(function(L){return '<div class="ch '+L+'">'+L+'</div>';}).join('');
 }
 
 function renderCard(ci){
-  const gid=ci===0?'card1-grid':'card2-grid';
-  const grid=document.getElementById(gid);
+  var gid=ci===0?'card1-grid':'card2-grid';
+  var grid=document.getElementById(gid);
   if(!grid||!game.cards[ci]) return;
-  const wins=new Set();
-  game.wonLines[ci].forEach(line=>line.forEach(i=>wins.add(i)));
-  grid.innerHTML=game.cards[ci].map((cell,idx)=>{
-    const isFree=cell.n==='★';
-    const isMarked=game.marked[ci].has(idx);
-    const isWin=wins.has(idx);
-    const cls=isWin?'cc win-cell':isFree?'cc free':isMarked?'cc marked':'cc';
-    return `<div class="${cls}" onclick="tapCard(${ci},${idx})">${cell.n}</div>`;
+  var wins=new Set();
+  game.wonLines[ci].forEach(function(line){line.forEach(function(i){wins.add(i);});});
+  grid.innerHTML=game.cards[ci].map(function(cell,idx){
+    var isFree=cell.n==='★';
+    var isMarked=game.marked[ci].has(idx);
+    var isWin=wins.has(idx);
+    var cls=isWin?'cc win-cell':isFree?'cc free':isMarked?'cc marked':'cc';
+    return '<div class="'+cls+'" onclick="tapCard('+ci+','+idx+')">'+cell.n+'</div>';
   }).join('');
 }
 
-function renderAllCards(){for(let ci=0;ci<game.cards.length;ci++) renderCard(ci);}
+function renderAllCards(){for(var ci=0;ci<game.cards.length;ci++) renderCard(ci);}
 
 function renderRecentBalls(){
-  document.getElementById('recent-balls').innerHTML=game.recentBalls.slice(-4).map(n=>{
-    const L=letterFor(n);
-    return `<div class="rball" style="background:${COL_COLORS[L]};color:${COL_TEXT[L]}"><span class="rl">${L}</span><span class="rn">${n}</span></div>`;
+  document.getElementById('recent-balls').innerHTML=game.recentBalls.slice(-4).map(function(n){
+    var L=letterFor(n);
+    return '<div class="rball" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+'"><span class="rl">'+L+'</span><span class="rn">'+n+'</span></div>';
   }).join('');
 }
 
 function renderCurrentBall(){
   if(!game.current) return;
-  const n=game.current,L=letterFor(n);
-  const el=document.getElementById('current-big');
+  var n=game.current,L=letterFor(n);
+  var el=document.getElementById('current-big');
   el.style.background=COL_COLORS[L];el.style.color=COL_TEXT[L];
-  el.style.boxShadow=`0 0 20px ${COL_COLORS[L]}`;
+  el.style.boxShadow='0 0 20px '+COL_COLORS[L];
   document.getElementById('cb-letter').textContent=L+'-';
   document.getElementById('cb-num').textContent=n;
 }
 
 function drawBall(){
   if(game.called.size>=75){triggerWinner();return;}
-  const pool=[];
-  for(let i=1;i<=75;i++) if(!game.called.has(i)) pool.push(i);
-  const n=pool[Math.floor(Math.random()*pool.length)];
+  var pool=[];
+  for(var i=1;i<=75;i++) if(!game.called.has(i)) pool.push(i);
+  var n=pool[Math.floor(Math.random()*pool.length)];
   game.called.add(n);game.current=n;
   game.recentBalls.push(n);
   if(game.recentBalls.length>8) game.recentBalls.shift();
   game.callCount++;
   document.getElementById('s-call').textContent=game.callCount;
-  game.cards.forEach((card,ci)=>{
-    card.forEach((cell,idx)=>{if(cell.n===n) game.marked[ci].add(idx);});
+  game.cards.forEach(function(card,ci){
+    card.forEach(function(cell,idx){if(cell.n===n) game.marked[ci].add(idx);});
     if(checkWin(ci)) return;
   });
   renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
@@ -511,8 +530,8 @@ function manualCall(n){
   if(game.recentBalls.length>8) game.recentBalls.shift();
   game.callCount++;
   document.getElementById('s-call').textContent=game.callCount;
-  game.cards.forEach((card,ci)=>{
-    card.forEach((cell,idx)=>{if(cell.n===n) game.marked[ci].add(idx);});
+  game.cards.forEach(function(card,ci){
+    card.forEach(function(cell,idx){if(cell.n===n) game.marked[ci].add(idx);});
     checkWin(ci);
   });
   renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
@@ -526,13 +545,13 @@ function tapCard(ci,idx){
 }
 
 function checkWin(ci){
-  const lines=[];
-  for(let r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
-  for(let c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
+  var lines=[];
+  for(var r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
+  for(var c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
   lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);
-  const prev=game.wonLines[ci].size;
-  const nw=new Set();
-  lines.forEach(line=>{if(line.every(i=>game.marked[ci].has(i))) nw.add(line);});
+  var prev=game.wonLines[ci].size;
+  var nw=new Set();
+  lines.forEach(function(line){if(line.every(function(i){return game.marked[ci].has(i);})) nw.add(line);});
   game.wonLines[ci]=nw;
   if(nw.size>prev){
     stopAutoGame();
@@ -543,49 +562,28 @@ function checkWin(ci){
 }
 
 function renderWinnerCard(ci){
-  const card=game.cards[ci];
-  const marked=game.marked[ci];
-  const wins=new Set();
-  game.wonLines[ci].forEach(line=>line.forEach(i=>wins.add(i)));
-  document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
-  document.getElementById('w-card-grid').innerHTML=card.map((cell,idx)=>{
-    const isFree=cell.n==='★';
-    const isWin=wins.has(idx);
-    const isMarked=marked.has(idx);
-    const cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
-    return `<div class="${cls}">${cell.n}</);
-  game.wonLines[ci]=nw;
-  if(nw.size>prev){
-    stopAutoGame();
-    triggerWinner(ci);
-    return true;
-  }
-  return false;
-}
-
-function renderWinnerCard(ci){
-  const card=game.cards[ci];
-  const marked=game.marked[ci];
-  const wins=new Set();
-  game.wonLines[ci].forEach(line=>line.forEach(i=>wins.add(i)));
-  document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
-  document.getElementById('w-card-grid').innerHTML=card.map((cell,idx)=>{
-    const isFree=cell.n==='★';
-    const isWin=wins.has(idx);
-    const isMarked=marked.has(idx);
-    const cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
-    return `<div class="${cls}">${cell.n}</div>`;
+  var card=game.cards[ci];
+  var marked=game.marked[ci];
+  var wins=new Set();
+  game.wonLines[ci].forEach(function(line){line.forEach(function(i){wins.add(i);});});
+  document.getElementById('w-card-hdr').innerHTML=COLS.map(function(L){return '<div class="wch '+L+'">'+L+'</div>';}).join('');
+  document.getElementById('w-card-grid').innerHTML=card.map(function(cell,idx){
+    var isFree=cell.n==='★';
+    var isWin=wins.has(idx);
+    var isMarked=marked.has(idx);
+    var cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
+    return '<div class="'+cls+'">'+cell.n+'</div>';
   }).join('');
   document.getElementById('w-card-box').style.display='block';
 }
 
 function triggerWinner(ci){
   stopAutoGame();
-  const isPlayer=ci!==undefined;
-  const winnerName=isPlayer?'You':FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
-  const winnerCardNum=isPlayer?game.cardNums[ci]:Math.floor(Math.random()*400)+1;
-  const totalPot=game.totalPlayers*10;
-  const prize=Math.round(totalPot*0.8);
+  var isPlayer=ci!==undefined;
+  var winnerName=isPlayer?'You':FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
+  var winnerCardNum=isPlayer?game.cardNums[ci]:Math.floor(Math.random()*400)+1;
+  var totalPot=game.totalPlayers*10;
+  var prize=Math.round(totalPot*0.8);
 
   document.getElementById('w-round').textContent=round;
   document.getElementById('w-players').textContent=game.totalPlayers;
@@ -593,52 +591,52 @@ function triggerWinner(ci){
   document.getElementById('w-card').textContent='#'+winnerCardNum;
   document.getElementById('w-prize').textContent=prize;
 
-  if(isPlayer && game.betDeducted){
+  if(isPlayer&&game.betDeducted){
     reportWin(prize);
   }
 
   if(isPlayer){
     renderWinnerCard(ci);
   }else{
-    const fakeCard=generateCard();
-    const fakeMarked=new Set([12]);
-    const fakeCalled=new Set();
-    for(let i=0;i<30;i++){
-      const rn=Math.floor(Math.random()*75)+1;
+    var fakeCard=generateCard();
+    var fakeMarked=new Set([12]);
+    var fakeCalled=new Set();
+    for(var i=0;i<30;i++){
+      var rn=Math.floor(Math.random()*75)+1;
       fakeCalled.add(rn);
-      fakeCard.forEach((cell,idx)=>{if(cell.n===rn) fakeMarked.add(idx);});
+      fakeCard.forEach(function(cell,idx){if(cell.n===rn) fakeMarked.add(idx);});
     }
-    const fakeWins=new Set();
-    const lines=[];
-    for(let r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
-    for(let c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
+    var fakeWins=new Set();
+    var lines=[];
+    for(var r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
+    for(var c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
     lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);
-    lines.forEach(line=>{if(line.every(i=>fakeMarked.has(i))) line.forEach(i=>fakeWins.add(i));});
-    document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
-    document.getElementById('w-card-grid').innerHTML=fakeCard.map((cell,idx)=>{
-      const isFree=cell.n==='★';
-      const isWin=fakeWins.has(idx);
-      const isMarked=fakeMarked.has(idx);
-      const cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
-      return `<div class="${cls}">${cell.n}</div>`;
+    lines.forEach(function(line){if(line.every(function(i){return fakeMarked.has(i);})) line.forEach(function(i){fakeWins.add(i);});});
+    document.getElementById('w-card-hdr').innerHTML=COLS.map(function(L){return '<div class="wch '+L+'">'+L+'</div>';}).join('');
+    document.getElementById('w-card-grid').innerHTML=fakeCard.map(function(cell,idx){
+      var isFree=cell.n==='★';
+      var isWin=fakeWins.has(idx);
+      var isMarked=fakeMarked.has(idx);
+      var cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
+      return '<div class="'+cls+'">'+cell.n+'</div>';
     }).join('');
     document.getElementById('w-card-box').style.display='block';
   }
 
   showScreen('screen-winner');
 
-  const fill=document.getElementById('dist-fill');
-  const countEl=document.getElementById('next-count');
+  var fill=document.getElementById('dist-fill');
+  var countEl=document.getElementById('next-count');
   fill.style.transition='none';
   fill.style.width='100%';
-  setTimeout(()=>{
+  setTimeout(function(){
     fill.style.transition='width 10s linear';
     fill.style.width='0%';
   },50);
 
-  let nc=10;
+  var nc=10;
   countEl.textContent=nc;
-  const wIv=setInterval(()=>{
+  var wIv=setInterval(function(){
     nc--;
     countEl.textContent=nc;
     if(nc<=0){
@@ -652,13 +650,13 @@ function triggerWinner(ci){
 function newRound(){
   selCards=new Set();
   game.betDeducted=false;
-  for(let i=1;i<=400;i++){
-    const el=document.getElementById('cc-'+i);
+  for(var i=1;i<=400;i++){
+    var el=document.getElementById('cc-'+i);
     if(el) el.classList.remove('selected','disabled');
   }
   document.getElementById('sel-count').textContent='0';
   document.getElementById('s-win-sel').textContent='0';
-  document.getElementById('s-bet').textContent='10';
+  document.getElementById('s-bet').textContent='0';
   showScreen('screen-select');
   fetchBalance();
   startTimer();
@@ -670,13 +668,13 @@ function leaveGame(){
 }
 
 function reloadCards(){
-  game.cards=game.cards.map(()=>generateCard());
-  game.marked=game.cards.map(()=>new Set([12]));
-  game.wonLines=game.cards.map(()=>new Set());
-  game.called.forEach(n=>{
-    game.cards.forEach((card,ci)=>card.forEach((cell,idx)=>{if(cell.n===n) game.marked[ci].add(idx);}));
+  game.cards=game.cards.map(function(){return generateCard();});
+  game.marked=game.cards.map(function(){return new Set([12]);});
+  game.wonLines=game.cards.map(function(){return new Set();});
+  game.called.forEach(function(n){
+    game.cards.forEach(function(card,ci){card.forEach(function(cell,idx){if(cell.n===n) game.marked[ci].add(idx);});});
   });
-  game.cards.forEach((_,ci)=>checkWin(ci));
+  game.cards.forEach(function(_,ci){checkWin(ci);});
   renderAllCards();
 }
 
@@ -691,7 +689,7 @@ function toggleAutoBtn(){
 }
 function startAutoGame(){
   stopAutoGame();
-  game.autoIv=setInterval(()=>{
+  game.autoIv=setInterval(function(){
     if(!game.autoRunning||game.called.size>=75){stopAutoGame();return;}
     drawBall();
   },2000);
@@ -699,7 +697,7 @@ function startAutoGame(){
 function stopAutoGame(){clearInterval(game.autoIv);game.autoIv=null;}
 
 function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
 }
 
@@ -709,7 +707,7 @@ initTelegram();
 fetchBalance();
 startTimer();
 
-setTimeout(()=>{
+setTimeout(function(){
   if(document.getElementById('screen-game').classList.contains('active')){
     triggerWinner();
   }
