@@ -1,4 +1,3 @@
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -33,24 +32,21 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .bottom-bar{background:var(--bg2);padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
 .selected-info{flex:1;font-size:12px;color:var(--muted);}
 .selected-info strong{color:var(--text);font-size:14px;}
-.play-btn{padding:11px 24px;border-radius:10px;border:none;background:var(--green);color:#000;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;opacity:.4;pointer-events:none;}
-.play-btn.ready{opacity:1;pointer-events:all;}
-.play-btn.ready:active{transform:scale(0.97);}
 
 /* GAME SCREEN */
 .main{display:flex;flex:1;overflow:hidden;}
 .left-col{flex:1;padding:8px 4px 8px 8px;overflow-y:auto;}
 .bingo-header-row{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
 .bh{text-align:center;font-size:13px;font-weight:700;padding:5px 2px;border-radius:6px;color:#fff;}
-.bh.B{background:var(--green);color:#000;}
-.bh.I{background:var(--blue);color:#000;}
-.bh.N{background:var(--purple);}
-.bh.G{background:var(--pink);}
-.bh.O{background:var(--orange);}
+.bh.B{background:#4a9eff;color:#fff;}
+.bh.I{background:#9b59b6;color:#fff;}
+.bh.N{background:#e91e8c;color:#fff;}
+.bh.G{background:#ffd700;color:#000;}
+.bh.O{background:#ff6b35;color:#000;}
 .num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
 .num-cell{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1.5px solid rgba(255,107,53,0.4);transition:all .2s;}
-.num-cell.called{background:var(--green);color:#000;border-color:var(--green);}
-.num-cell.current{background:var(--orange);color:#000;border-color:var(--orange);transform:scale(1.08);box-shadow:0 0 10px var(--orange);}
+.num-cell.called{color:#000;border-color:transparent;}
+.num-cell.current{color:#000;border-color:transparent;transform:scale(1.08);}
 
 .right-col{width:168px;padding:8px 8px 8px 4px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
 .recent-balls{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
@@ -72,11 +68,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .card-id-lbl{text-align:center;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
 .card-hdr{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
 .ch{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;margin:auto;}
-.ch.B{background:var(--green);color:#000;}
-.ch.I{background:var(--blue);color:#000;}
-.ch.N{background:var(--purple);}
-.ch.G{background:var(--pink);}
-.ch.O{background:var(--orange);}
+.ch.B{background:#4a9eff;color:#fff;}
+.ch.I{background:#9b59b6;color:#fff;}
+.ch.N{background:#e91e8c;color:#fff;}
+.ch.G{background:#ffd700;color:#000;}
+.ch.O{background:#ff6b35;color:#000;}
 .card-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;}
 .cc{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,0.08);transition:all .2s;}
 .cc.marked{background:var(--green);color:#000;}
@@ -123,7 +119,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
     <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
     <div class="bottom-bar">
       <div class="selected-info">Selected: <strong id="sel-count">0</strong> / 2</div>
-      <button class="play-btn" id="play-btn" onclick="startGame()">▶ PLAY</button>
     </div>
   </div>
 
@@ -202,8 +197,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 
 <script>
 const COLS=['B','I','N','G','O'];
-const COL_COLORS={B:'var(--green)',I:'var(--blue)',N:'var(--purple)',G:'var(--pink)',O:'var(--orange)'};
-const COL_TEXT={B:'#000',I:'#000',N:'#fff',G:'#fff',O:'#000'};
+const COL_COLORS={B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
+const COL_TEXT={B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
 
 // fake telegram names for demo — you replace with real Telegram API
 const FAKE_NAMES=['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
@@ -245,7 +240,6 @@ function toggleCard(n){
   }
   document.getElementById('sel-count').textContent=selCards.size;
   updateWinDisplay();
-  document.getElementById('play-btn').classList.toggle('ready',selCards.size>0);
 }
 
 function updateWinDisplay(){
@@ -316,13 +310,17 @@ function letterFor(n){return COLS[colFor(n)];}
 function renderNumGrid(){
   const g=document.getElementById('num-grid');
   let h='';
-  // 5 columns only: B(1-15), I(16-30), N(31-45), G(46-60), O(61-75)
-  // 15 rows
   for(let row=1;row<=15;row++){
     for(let ci=0;ci<5;ci++){
       const n=ci*15+row;
-      const cls=game.current===n?'num-cell current':game.called.has(n)?'num-cell called':'num-cell';
-      h+=`<div class="${cls}" onclick="manualCall(${n})">${n}</div>`;
+      const L=COLS[ci];
+      if(game.current===n){
+        h+=`<div class="num-cell current" style="background:${COL_COLORS[L]};color:${COL_TEXT[L]};border-color:${COL_COLORS[L]};box-shadow:0 0 10px ${COL_COLORS[L]}">${n}</div>`;
+      }else if(game.called.has(n)){
+        h+=`<div class="num-cell called" style="background:${COL_COLORS[L]};color:${COL_TEXT[L]};border-color:${COL_COLORS[L]}">${n}</div>`;
+      }else{
+        h+=`<div class="num-cell">${n}</div>`;
+      }
     }
   }
   g.innerHTML=h;
@@ -423,10 +421,9 @@ function checkWin(ci){
 
 function triggerWinner(ci){
   stopAutoGame();
-  // pick a winner: if player won use their info, else simulate random winner
   const isPlayer = ci !== undefined;
   const winnerName = isPlayer
-    ? 'You' // replace with real Telegram firstName
+    ? 'You'
     : FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
   const winnerCard = isPlayer
     ? game.cardNums[ci]
@@ -442,7 +439,6 @@ function triggerWinner(ci){
 
   showScreen('screen-winner');
 
-  // 5 second countdown + shrink bar
   const fill=document.getElementById('dist-fill');
   const countEl=document.getElementById('next-count');
   fill.style.transition='none';
@@ -473,7 +469,6 @@ function newRound(){
   }
   document.getElementById('sel-count').textContent='0';
   document.getElementById('s-win-sel').textContent='0';
-  document.getElementById('play-btn').classList.remove('ready');
   showScreen('screen-select');
   startTimer();
 }
@@ -520,7 +515,6 @@ function showScreen(id){
 buildGrid();
 startTimer();
 
-// demo: after 20s simulate a winner if nobody won
 setTimeout(()=>{
   if(document.getElementById('screen-game').classList.contains('active')){
     triggerWinner();
