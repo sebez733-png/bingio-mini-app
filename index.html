@@ -223,9 +223,6 @@ const COL_COLORS={B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
 const COL_TEXT={B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
 const FAKE_NAMES=['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
 
-// ══════════════════════════════════════════
-// YOUR NGROK URL - DON'T ADD / AT THE END
-// ══════════════════════════════════════════
 const API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
 
 let tgUserId = null;
@@ -254,16 +251,17 @@ function initTelegram(){
       wa.expand();
       if(wa.initDataUnsafe && wa.initDataUnsafe.user){
         tgUserId=wa.initDataUnsafe.user.id;
-        console.log('Telegram user ID:',tgUserId);
       }
     }
-  }catch(e){console.error('Telegram init error:',e);}
+  }catch(e){}
 }
 
 async function fetchBalance(){
   if(!tgUserId) return;
   try{
-    const res=await fetch(`${API_BASE}/api/balance?user_id=${tgUserId}`);
+    const res=await fetch(`${API_BASE}/api/balance?user_id=${tgUserId}`,{
+      headers:{'ngrok-skip-browser-warning':'true'}
+    });
     const data=await res.json();
     if(data.success){
       userPlayBalance=data.play_balance;
@@ -271,7 +269,6 @@ async function fetchBalance(){
       updateBalanceDisplay();
     }
   }catch(e){
-    console.error('Fetch balance error:',e);
     apiAvailable=false;
   }
 }
@@ -291,7 +288,7 @@ async function deductBet(amount){
   try{
     const res=await fetch(`${API_BASE}/api/bet`,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
       body:JSON.stringify({user_id:tgUserId,amount:amount})
     });
     const data=await res.json();
@@ -305,7 +302,6 @@ async function deductBet(amount){
       return false;
     }
   }catch(e){
-    console.error('Deduct bet error:',e);
     return true;
   }
 }
@@ -315,7 +311,7 @@ async function reportWin(amount){
   try{
     const res=await fetch(`${API_BASE}/api/win`,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
       body:JSON.stringify({user_id:tgUserId,amount:amount})
     });
     const data=await res.json();
@@ -323,7 +319,7 @@ async function reportWin(amount){
       userPlayBalance=data.play_balance;
       updateBalanceDisplay();
     }
-  }catch(e){console.error('Report win error:',e);}
+  }catch(e){}
 }
 
 /* ══ SELECT ══ */
@@ -360,11 +356,7 @@ function toggleCard(n){
 }
 
 function calcTotalPlayers(myCartelas){
-  const otherPeople=Math.floor(Math.random()*15)+5;
-  let otherC=0;
-  for(let i=0;i<otherPeople;i++) otherC+=(Math.random()<0.6?1:2);
-  game.otherCartelas=otherC;
-  return myCartelas+otherC;
+  return myCartelas;
 }
 
 function updateWinDisplay(){
@@ -541,6 +533,27 @@ function checkWin(ci){
   const prev=game.wonLines[ci].size;
   const nw=new Set();
   lines.forEach(line=>{if(line.every(i=>game.marked[ci].has(i))) nw.add(line);});
+  game.wonLines[ci]=nw;
+  if(nw.size>prev){
+    stopAutoGame();
+    triggerWinner(ci);
+    return true;
+  }
+  return false;
+}
+
+function renderWinnerCard(ci){
+  const card=game.cards[ci];
+  const marked=game.marked[ci];
+  const wins=new Set();
+  game.wonLines[ci].forEach(line=>line.forEach(i=>wins.add(i)));
+  document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
+  document.getElementById('w-card-grid').innerHTML=card.map((cell,idx)=>{
+    const isFree=cell.n==='★';
+    const isWin=wins.has(idx);
+    const isMarked=marked.has(idx);
+    const cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
+    return `<div class="${cls}">${cell.n}</);
   game.wonLines[ci]=nw;
   if(nw.size>prev){
     stopAutoGame();
