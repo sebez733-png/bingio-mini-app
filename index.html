@@ -33,6 +33,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .selected-info{flex:1;font-size:12px;color:var(--muted);}
 .selected-info strong{color:var(--text);font-size:14px;}
 
+/* INSUFFICIENT BALANCE */
+.no-balance-msg{background:#e74c3c;color:#fff;text-align:center;padding:8px 12px;font-size:11px;font-weight:600;display:none;}
+
 /* GAME SCREEN */
 .main{display:flex;flex:1;overflow:hidden;}
 .left-col{flex:1;padding:8px 4px 8px 8px;overflow-y:auto;}
@@ -118,16 +121,19 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .next-count{font-size:22px;font-weight:700;color:var(--orange);}
 </style>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <div class="app">
 
   <!-- ══ SCREEN 1: SELECT ══ -->
   <div class="screen active" id="screen-select">
     <div class="topbar">
-      <div class="stat-box"><div class="stat-label">BALANCE(ሂሳብ)</div><div class="stat-val green">—</div></div>
-      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val">10</div></div>
+      <div class="stat-box"><div class="stat-label">BALANCE(ሂሳብ)</div><div class="stat-val green" id="s-balance">—</div></div>
+      <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val" id="s-bet">10</div></div>
       <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="s-win-sel">0</div></div>
       <div class="stat-box"><div class="stat-label">TIME LEFT</div><div class="stat-val yellow" id="s-time">35s</div></div>
     </div>
+    <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient balance! Deposit first. በቂ ሂሳብ የለም!</div>
     <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
     <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
     <div class="bottom-bar">
@@ -215,9 +221,16 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 const COLS=['B','I','N','G','O'];
 const COL_COLORS={B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
 const COL_TEXT={B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
-
-// fake telegram names for demo — you replace with real Telegram API
 const FAKE_NAMES=['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
+
+// ══════════════════════════════════════════
+// YOUR NGROK URL - DON'T ADD / AT THE END
+// ══════════════════════════════════════════
+const API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+
+let tgUserId = null;
+let userPlayBalance = 0;
+let apiAvailable = false;
 
 let selCards=new Set();
 let timeLeft=35;
@@ -228,9 +241,90 @@ let game={
   called:new Set(),current:null,recentBalls:[],
   autoRunning:true,autoIv:null,callCount:0,
   cards:[],marked:[],wonLines:[],cardNums:[],
-  winAmount:0,totalPlayers:0,
-  otherCartelas:0
+  winAmount:0,totalPlayers:0,otherCartelas:0,
+  betDeducted:false
 };
+
+/* ══ TELEGRAM & API ══ */
+function initTelegram(){
+  try{
+    if(window.Telegram && window.Telegram.WebApp){
+      const wa=window.Telegram.WebApp;
+      wa.ready();
+      wa.expand();
+      if(wa.initDataUnsafe && wa.initDataUnsafe.user){
+        tgUserId=wa.initDataUnsafe.user.id;
+        console.log('Telegram user ID:',tgUserId);
+      }
+    }
+  }catch(e){console.error('Telegram init error:',e);}
+}
+
+async function fetchBalance(){
+  if(!tgUserId) return;
+  try{
+    const res=await fetch(`${API_BASE}/api/balance?user_id=${tgUserId}`);
+    const data=await res.json();
+    if(data.success){
+      userPlayBalance=data.play_balance;
+      apiAvailable=true;
+      updateBalanceDisplay();
+    }
+  }catch(e){
+    console.error('Fetch balance error:',e);
+    apiAvailable=false;
+  }
+}
+
+function updateBalanceDisplay(){
+  document.getElementById('s-balance').textContent=userPlayBalance;
+  const msg=document.getElementById('no-balance-msg');
+  if(userPlayBalance<10 && apiAvailable){
+    msg.style.display='block';
+  }else{
+    msg.style.display='none';
+  }
+}
+
+async function deductBet(amount){
+  if(!tgUserId||!apiAvailable) return true;
+  try{
+    const res=await fetch(`${API_BASE}/api/bet`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user_id:tgUserId,amount:amount})
+    });
+    const data=await res.json();
+    if(data.success){
+      userPlayBalance=data.play_balance;
+      updateBalanceDisplay();
+      game.betDeducted=true;
+      return true;
+    }else{
+      alert(data.error||'Insufficient balance');
+      return false;
+    }
+  }catch(e){
+    console.error('Deduct bet error:',e);
+    return true;
+  }
+}
+
+async function reportWin(amount){
+  if(!tgUserId||!apiAvailable) return;
+  try{
+    const res=await fetch(`${API_BASE}/api/win`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user_id:tgUserId,amount:amount})
+    });
+    const data=await res.json();
+    if(data.success){
+      userPlayBalance=data.play_balance;
+      updateBalanceDisplay();
+    }
+  }catch(e){console.error('Report win error:',e);}
+}
 
 /* ══ SELECT ══ */
 function buildGrid(){
@@ -244,18 +338,24 @@ function toggleCard(n){
   if(selCards.has(n)){
     selCards.delete(n);
     document.getElementById('cc-'+n).classList.remove('selected');
-  } else {
+  }else{
     if(selCards.size>=2) return;
+    if(apiAvailable && selCards.size===1 && userPlayBalance<20){
+      alert('⚠️ Insufficient balance for 2 cards! በቂ ሂሳብ የለም!');
+      return;
+    }
     selCards.add(n);
     document.getElementById('cc-'+n).classList.add('selected');
   }
   if(selCards.size>=2){
     for(let i=1;i<=400;i++) if(!selCards.has(i)) document.getElementById('cc-'+i).classList.add('disabled');
-  } else {
+  }else{
     for(let i=1;i<=400;i++) document.getElementById('cc-'+i).classList.remove('disabled');
     selCards.forEach(s=>document.getElementById('cc-'+s).classList.add('selected'));
   }
   document.getElementById('sel-count').textContent=selCards.size;
+  const betAmount=selCards.size*10;
+  document.getElementById('s-bet').textContent=betAmount;
   updateWinDisplay();
 }
 
@@ -286,17 +386,23 @@ function startTimer(){
   },1000);
 }
 
-function startGame(){
+async function startGame(){
   clearInterval(timerIv);
   const cardNums=Array.from(selCards);
   if(cardNums.length===0) cardNums.push(Math.floor(Math.random()*400)+1);
+
+  const betAmount=cardNums.length*10;
+  const deducted=await deductBet(betAmount);
+  if(!deducted) return;
+
   game.cardNums=cardNums;
   game.cards=cardNums.map(()=>generateCard());
   game.marked=game.cards.map(()=>new Set([12]));
   game.wonLines=game.cards.map(()=>new Set());
   game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;
-  game.winAmount=Math.round(selCards.size*10*0.8);
+  game.winAmount=Math.round(betAmount*0.8);
   game.totalPlayers=calcTotalPlayers(cardNums.length);
+  game.betDeducted=true;
 
   document.getElementById('s-players').textContent=game.totalPlayers;
   document.getElementById('card1-id').textContent=cardNums[0];
@@ -306,13 +412,13 @@ function startGame(){
     renderCardHeader('card2-header');
     document.getElementById('card2-box').style.display='block';
     document.getElementById('no-card-slot').style.display='none';
-  } else {
+  }else{
     document.getElementById('card2-box').style.display='none';
     document.getElementById('no-card-slot').style.display='flex';
   }
 
   showScreen('screen-game');
-  renderNumGrid(); renderAllCards();
+  renderNumGrid();renderAllCards();
   if(game.autoRunning) startAutoGame();
 }
 
@@ -449,7 +555,6 @@ function renderWinnerCard(ci){
   const marked=game.marked[ci];
   const wins=new Set();
   game.wonLines[ci].forEach(line=>line.forEach(i=>wins.add(i)));
-
   document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
   document.getElementById('w-card-grid').innerHTML=card.map((cell,idx)=>{
     const isFree=cell.n==='★';
@@ -463,11 +568,11 @@ function renderWinnerCard(ci){
 
 function triggerWinner(ci){
   stopAutoGame();
-  const isPlayer = ci !== undefined;
-  const winnerName = isPlayer ? 'You' : FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
-  const winnerCardNum = isPlayer ? game.cardNums[ci] : Math.floor(Math.random()*400)+1;
-  const totalPot = game.totalPlayers * 10;
-  const prize = Math.round(totalPot * 0.8);
+  const isPlayer=ci!==undefined;
+  const winnerName=isPlayer?'You':FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
+  const winnerCardNum=isPlayer?game.cardNums[ci]:Math.floor(Math.random()*400)+1;
+  const totalPot=game.totalPlayers*10;
+  const prize=Math.round(totalPot*0.8);
 
   document.getElementById('w-round').textContent=round;
   document.getElementById('w-players').textContent=game.totalPlayers;
@@ -475,9 +580,13 @@ function triggerWinner(ci){
   document.getElementById('w-card').textContent='#'+winnerCardNum;
   document.getElementById('w-prize').textContent=prize;
 
+  if(isPlayer && game.betDeducted){
+    reportWin(prize);
+  }
+
   if(isPlayer){
     renderWinnerCard(ci);
-  } else {
+  }else{
     const fakeCard=generateCard();
     const fakeMarked=new Set([12]);
     const fakeCalled=new Set();
@@ -492,7 +601,6 @@ function triggerWinner(ci){
     for(let c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
     lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);
     lines.forEach(line=>{if(line.every(i=>fakeMarked.has(i))) line.forEach(i=>fakeWins.add(i));});
-
     document.getElementById('w-card-hdr').innerHTML=COLS.map(L=>`<div class="wch ${L}">${L}</div>`).join('');
     document.getElementById('w-card-grid').innerHTML=fakeCard.map((cell,idx)=>{
       const isFree=cell.n==='★';
@@ -530,13 +638,16 @@ function triggerWinner(ci){
 
 function newRound(){
   selCards=new Set();
+  game.betDeducted=false;
   for(let i=1;i<=400;i++){
     const el=document.getElementById('cc-'+i);
     if(el) el.classList.remove('selected','disabled');
   }
   document.getElementById('sel-count').textContent='0';
   document.getElementById('s-win-sel').textContent='0';
+  document.getElementById('s-bet').textContent='10';
   showScreen('screen-select');
+  fetchBalance();
   startTimer();
 }
 
@@ -579,7 +690,10 @@ function showScreen(id){
   document.getElementById(id).classList.add('active');
 }
 
+/* ══ INIT ══ */
 buildGrid();
+initTelegram();
+fetchBalance();
 startTimer();
 
 setTimeout(()=>{
