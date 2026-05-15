@@ -11,16 +11,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .screen{display:none;flex:1;flex-direction:column;}
 .screen.active{display:flex;}
 
-/* TOPBAR */
-.topbar{background:var(--bg2);padding:10px 12px;display:flex;gap:6px;flex-shrink:0;}
-.stat-box{flex:1;background:var(--bg3);border-radius:8px;padding:6px 8px;text-align:center;}
-.stat-label{font-size:9px;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;}
-.stat-val{font-size:18px;font-weight:700;line-height:1.2;color:#fff;}
+.topbar{background:var(--bg2);padding:8px 6px;display:flex;gap:4px;flex-shrink:0;}
+.stat-box{flex:1;background:var(--bg3);border-radius:8px;padding:5px 4px;text-align:center;}
+.stat-label{font-size:8px;color:var(--muted);letter-spacing:.2px;text-transform:uppercase;}
+.stat-val{font-size:16px;font-weight:700;line-height:1.2;color:#fff;}
 .stat-val.green{color:var(--green);}
 .stat-val.yellow{color:var(--yellow);}
 .stat-val.orange{color:var(--orange);}
 
-/* SELECT SCREEN */
 .select-info{background:var(--bg2);text-align:center;padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.07);}
 .select-info span{color:var(--orange);font-weight:700;}
 .cards-scroll{flex:1;overflow-y:auto;padding:8px;}
@@ -34,7 +32,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .selected-info strong{color:var(--text);font-size:14px;}
 .no-balance-msg{background:#e74c3c;color:#fff;text-align:center;padding:8px 12px;font-size:11px;font-weight:600;display:none;}
 
-/* GAME SCREEN */
 .main{display:flex;flex:1;overflow:hidden;}
 .left-col{flex:1;padding:8px 4px 8px 8px;overflow-y:auto;}
 .bingo-header-row{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
@@ -88,7 +85,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .bb.auto-bb.active{background:var(--yellow);color:#000;}
 .bb[disabled]{opacity:0.35;pointer-events:none;cursor:not-allowed;}
 
-/* WINNER SCREEN */
 .winner-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2rem;text-align:center;background:var(--bg);}
 .winner-trophy{font-size:56px;animation:bounce .5s ease infinite alternate;}
 @keyframes bounce{from{transform:translateY(0);}to{transform:translateY(-12px);}}
@@ -116,9 +112,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 .distribute-fill{height:100%;background:var(--yellow);border-radius:4px;width:100%;transition:width 1s linear;}
 .next-label{font-size:13px;color:var(--muted);}
 .next-count{font-size:22px;font-weight:700;color:var(--orange);}
-
-/* DEBUG */
-.debug-bar{background:#333;color:#ff0;font-size:10px;padding:4px 8px;text-align:center;display:none;}
 </style>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -128,13 +121,13 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
   <!-- ══ SCREEN 1: SELECT ══ -->
   <div class="screen active" id="screen-select">
     <div class="topbar">
-      <div class="stat-box"><div class="stat-label">MAIN(ዋና)</div><div class="stat-val green" id="s-main">—</div></div>
-      <div class="stat-box"><div class="stat-label">PLAY(ጨዋታ)</div><div class="stat-val green" id="s-play">—</div></div>
+      <div class="stat-box"><div class="stat-label">MAIN</div><div class="stat-val green" id="s-main">—</div></div>
+      <div class="stat-box"><div class="stat-label">PLAY</div><div class="stat-val green" id="s-play">—</div></div>
       <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val orange" id="s-bet">0</div></div>
+      <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="s-win-sel">0</div></div>
       <div class="stat-box"><div class="stat-label">TIME LEFT</div><div class="stat-val yellow" id="s-time">35s</div></div>
     </div>
-    <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient PLAY balance! Deposit first. በቂ ሂሳብ የለም!</div>
-    <div class="debug-bar" id="debug-bar">Loading...</div>
+    <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient PLAY balance! በቂ ሂሳብ የለም!</div>
     <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
     <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
     <div class="bottom-bar">
@@ -219,24 +212,25 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 </div>
 
 <script>
-const COLS=['B','I','N','G','O'];
-const COL_COLORS={B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
-const COL_TEXT={B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
-const FAKE_NAMES=['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
+var COLS=['B','I','N','G','O'];
+var COL_COLORS={B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
+var COL_TEXT={B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
+var FAKE_NAMES=['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
 
-const API_BASE='https://dangling-seldom-sturdily.ngrok-free.dev';
+var API_BASE='https://dangling-seldom-sturdily.ngrok-free.dev';
 
-let tgUserId=null;
-let userMainBalance=0;
-let userPlayBalance=0;
-let apiAvailable=false;
+var tgUserId=null;
+var userMainBalance=0;
+var userPlayBalance=0;
+var apiAvailable=false;
+var gameActive=false;
 
-let selCards=new Set();
-let timeLeft=35;
-let timerIv=null;
-let round=1;
+var selCards=new Set();
+var timeLeft=35;
+var timerIv=null;
+var round=1;
 
-let game={
+var game={
   called:new Set(),current:null,recentBalls:[],
   autoRunning:true,autoIv:null,callCount:0,
   cards:[],marked:[],wonLines:[],cardNums:[],
@@ -244,54 +238,34 @@ let game={
   betDeducted:false
 };
 
-/* ══ DEBUG ══ */
-function showDebug(msg){
-  const el=document.getElementById('debug-bar');
-  if(el){el.style.display='block';el.textContent=msg;}
-}
-
 /* ══ TELEGRAM & API ══ */
 function initTelegram(){
   try{
     if(window.Telegram&&window.Telegram.WebApp){
-      const wa=window.Telegram.WebApp;
+      var wa=window.Telegram.WebApp;
       wa.ready();
       wa.expand();
       if(wa.initDataUnsafe&&wa.initDataUnsafe.user){
         tgUserId=wa.initDataUnsafe.user.id;
-        showDebug('User ID: '+tgUserId);
-      }else{
-        showDebug('No user data in Telegram. Open from bot!');
       }
-    }else{
-      showDebug('Not in Telegram WebApp');
     }
-  }catch(e){
-    showDebug('Telegram init error: '+e.message);
-  }
+  }catch(e){}
 }
 
 async function fetchBalance(){
-  if(!tgUserId){
-    showDebug('No user ID - cannot fetch balance');
-    return;
-  }
-  showDebug('Fetching balance for user '+tgUserId+'...');
+  if(!tgUserId) return;
   try{
-    const res=await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{
+    var res=await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{
       headers:{'ngrok-skip-browser-warning':'true'}
     });
-    const data=await res.json();
-    showDebug('API response: '+JSON.stringify(data));
+    var data=await res.json();
     if(data.success){
       userMainBalance=data.main_balance;
       userPlayBalance=data.play_balance;
       apiAvailable=true;
       updateBalanceDisplay();
-      showDebug('Balance loaded! Main:'+userMainBalance+' Play:'+userPlayBalance);
     }
   }catch(e){
-    showDebug('API ERROR: '+e.message);
     apiAvailable=false;
   }
 }
@@ -299,7 +273,7 @@ async function fetchBalance(){
 function updateBalanceDisplay(){
   document.getElementById('s-main').textContent=userMainBalance;
   document.getElementById('s-play').textContent=userPlayBalance;
-  const msg=document.getElementById('no-balance-msg');
+  var msg=document.getElementById('no-balance-msg');
   if(userPlayBalance<10&&apiAvailable){
     msg.style.display='block';
   }else{
@@ -310,12 +284,12 @@ function updateBalanceDisplay(){
 async function deductBet(amount){
   if(!tgUserId||!apiAvailable) return true;
   try{
-    const res=await fetch(API_BASE+'/api/bet',{
+    var res=await fetch(API_BASE+'/api/bet',{
       method:'POST',
       headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
       body:JSON.stringify({user_id:tgUserId,amount:amount})
     });
-    const data=await res.json();
+    var data=await res.json();
     if(data.success){
       userMainBalance=data.main_balance;
       userPlayBalance=data.play_balance;
@@ -334,12 +308,12 @@ async function deductBet(amount){
 async function reportWin(amount){
   if(!tgUserId||!apiAvailable) return;
   try{
-    const res=await fetch(API_BASE+'/api/win',{
+    var res=await fetch(API_BASE+'/api/win',{
       method:'POST',
       headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
       body:JSON.stringify({user_id:tgUserId,amount:amount})
     });
-    const data=await res.json();
+    var data=await res.json();
     if(data.success){
       userMainBalance=data.main_balance;
       userPlayBalance=data.play_balance;
@@ -350,9 +324,9 @@ async function reportWin(amount){
 
 /* ══ SELECT ══ */
 function buildGrid(){
-  const g=document.getElementById('cards-grid');
-  let h='';
-  for(let i=1;i<=400;i++) h+='<div class="card-cell" id="cc-'+i+'" onclick="toggleCard('+i+')">'+i+'</div>';
+  var g=document.getElementById('cards-grid');
+  var h='';
+  for(var i=1;i<=400;i++) h+='<div class="card-cell" id="cc-'+i+'" onclick="toggleCard('+i+')">'+i+'</div>';
   g.innerHTML=h;
 }
 
@@ -363,24 +337,24 @@ function toggleCard(n){
   }else{
     if(selCards.size>=2) return;
     if(apiAvailable&&selCards.size===1&&userPlayBalance<20){
-      alert('⚠️ Insufficient balance for 2 cards! በቂ ሂሳብ የለም!');
+      alert('⚠️ Insufficient balance for 2 cards!');
       return;
     }
     selCards.add(n);
     document.getElementById('cc-'+n).classList.add('selected');
   }
   if(selCards.size>=2){
-    for(let i=1;i<=400;i++) if(!selCards.has(i)) document.getElementById('cc-'+i).classList.add('disabled');
+    for(var i=1;i<=400;i++) if(!selCards.has(i)) document.getElementById('cc-'+i).classList.add('disabled');
   }else{
-    for(let i=1;i<=400;i++) document.getElementById('cc-'+i).classList.remove('disabled');
+    for(var i=1;i<=400;i++) document.getElementById('cc-'+i).classList.remove('disabled');
     selCards.forEach(function(s){document.getElementById('cc-'+s).classList.add('selected');});
   }
   document.getElementById('sel-count').textContent=selCards.size;
   var betAmount=selCards.size*10;
+  var winAmount=Math.round(betAmount*0.8);
   document.getElementById('s-bet').textContent=betAmount;
-  var win=Math.round(betAmount*0.8);
-  document.getElementById('s-win-sel').textContent=win;
-  document.getElementById('s-win-game').textContent=win;
+  document.getElementById('s-win-sel').textContent=winAmount;
+  document.getElementById('s-win-game').textContent=winAmount;
 }
 
 function startTimer(){
@@ -399,12 +373,20 @@ function startTimer(){
 async function startGame(){
   clearInterval(timerIv);
   var cardNums=Array.from(selCards);
-  if(cardNums.length===0) cardNums.push(Math.floor(Math.random()*400)+1);
+  if(cardNums.length===0){
+    alert('Please select at least 1 card!');
+    startTimer();
+    return;
+  }
 
   var betAmount=cardNums.length*10;
   var deducted=await deductBet(betAmount);
-  if(!deducted) return;
+  if(!deducted){
+    startTimer();
+    return;
+  }
 
+  gameActive=true;
   game.cardNums=cardNums;
   game.cards=cardNums.map(function(){return generateCard();});
   game.marked=game.cards.map(function(){return new Set([12]);});
@@ -579,6 +561,7 @@ function renderWinnerCard(ci){
 
 function triggerWinner(ci){
   stopAutoGame();
+  gameActive=false;
   var isPlayer=ci!==undefined;
   var winnerName=isPlayer?'You':FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
   var winnerCardNum=isPlayer?game.cardNums[ci]:Math.floor(Math.random()*400)+1;
@@ -600,10 +583,8 @@ function triggerWinner(ci){
   }else{
     var fakeCard=generateCard();
     var fakeMarked=new Set([12]);
-    var fakeCalled=new Set();
     for(var i=0;i<30;i++){
       var rn=Math.floor(Math.random()*75)+1;
-      fakeCalled.add(rn);
       fakeCard.forEach(function(cell,idx){if(cell.n===rn) fakeMarked.add(idx);});
     }
     var fakeWins=new Set();
@@ -648,6 +629,8 @@ function triggerWinner(ci){
 }
 
 function newRound(){
+  stopAutoGame();
+  gameActive=false;
   selCards=new Set();
   game.betDeducted=false;
   for(var i=1;i<=400;i++){
@@ -655,8 +638,8 @@ function newRound(){
     if(el) el.classList.remove('selected','disabled');
   }
   document.getElementById('sel-count').textContent='0';
-  document.getElementById('s-win-sel').textContent='0';
   document.getElementById('s-bet').textContent='0';
+  document.getElementById('s-win-sel').textContent='0';
   showScreen('screen-select');
   fetchBalance();
   startTimer();
@@ -706,10 +689,4 @@ buildGrid();
 initTelegram();
 fetchBalance();
 startTimer();
-
-setTimeout(function(){
-  if(document.getElementById('screen-game').classList.contains('active')){
-    triggerWinner();
-  }
-},20000);
 </script>
