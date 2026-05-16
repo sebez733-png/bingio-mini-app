@@ -53,46 +53,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .game-id-bar span{color:var(--yellow);font-weight:700;}
 .cards-scroll{flex:1;overflow-y:auto;padding:5px;}
 .cards-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
-
-/* ── CARD CELL WITH GLOW ── */
-.card-cell{
-  aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:600;cursor:pointer;
-  background:var(--bg2);color:var(--text);
-  border:1px solid rgba(255,107,53,0.4);
-  transition:all .15s;user-select:none;
-  position:relative;overflow:hidden;
-}
-.card-cell::before{
-  content:'';position:absolute;inset:0;border-radius:5px;
-  background:radial-gradient(circle at center, rgba(255,107,53,0.15) 0%, transparent 70%);
-  opacity:0;transition:opacity .2s;
-}
-.card-cell:hover::before{opacity:1;}
+.card-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1px solid rgba(255,107,53,0.4);transition:all .15s;user-select:none;}
 .card-cell:active{transform:scale(0.93);}
-.card-cell.selected{
-  background:var(--orange);color:#000;border-color:var(--orange);
-  box-shadow:0 0 12px rgba(255,107,53,0.8), 0 0 24px rgba(255,107,53,0.4), inset 0 0 8px rgba(255,255,255,0.2);
-  transform:scale(1.05);
-  animation:cardPulse 1.5s ease-in-out infinite;
-}
-@keyframes cardPulse{
-  0%,100%{box-shadow:0 0 12px rgba(255,107,53,0.8), 0 0 24px rgba(255,107,53,0.4);}
-  50%{box-shadow:0 0 18px rgba(255,107,53,1), 0 0 36px rgba(255,107,53,0.6), 0 0 60px rgba(255,107,53,0.2);}
-}
+.card-cell.selected{background:var(--orange);color:#000;border-color:var(--orange);box-shadow:0 0 8px rgba(255,107,53,0.6);transform:scale(1.05);}
 .card-cell.disabled{opacity:0.3;cursor:not-allowed;}
 .bottom-bar{background:var(--bg2);padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
 .selected-info{flex:1;font-size:12px;color:var(--muted);}
 .selected-info strong{color:var(--text);font-size:14px;}
 .no-balance-msg{background:#e74c3c;color:#fff;text-align:center;padding:8px 12px;font-size:11px;font-weight:600;display:none;}
-
-/* ── MIN PLAYERS WARNING ── */
-.min-players-msg{
-  background:rgba(255,107,53,0.15);border:1px solid var(--orange);
-  color:var(--orange);text-align:center;padding:6px 12px;font-size:10px;font-weight:600;
-  display:none;animation:blink 1.5s ease-in-out infinite;
-}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.5;}}
 
 /* ── WAIT SCREEN (game in progress) ── */
 .wait-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
@@ -254,9 +222,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
     <!-- Card selection (shown when no game running) -->
     <div id="select-area">
       <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient PLAY balance! በቂ ሂሳብ የለም!</div>
-      <!-- ✅ NEW: Min players warning -->
-      <div class="min-players-msg" id="min-players-msg">⚠️ ቢያንስ 2 ተጫዋቾች ያስፈልጋሉ! Minimum 2 players needed! Restarting...</div>
-      <div class="game-id-bar">Game ID: <span id="game-id-label">—</span> &nbsp;|&nbsp; Players: <span id="lobby-players" style="color:var(--green);font-weight:700;">0</span></div>
+      <div class="game-id-bar">Game ID: <span id="game-id-label">—</span></div>
       <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
       <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
       <div class="bottom-bar">
@@ -504,13 +470,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
    CONFIG
 ══════════════════════════════════════════ */
 var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+  var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
 
-/* ══════════════════════════════════════════
-   SOCKET.IO — FULL REAL-TIME SYNC
-══════════════════════════════════════════ */
+// ✅ NEW: SocketIO connection for real-time sync
 var socket = null;
-// ✅ Track real player count from server
-var serverPlayerCount = 0;
 
 function initSocket(){
   try{
@@ -523,203 +486,43 @@ function initSocket(){
 
     socket.on('connect', function(){
       console.log('🔌 Socket connected!');
-      socket.emit('join_room', {room:'bingo_main', user_id: tgUserId});
+      socket.emit('join_room', {room: 'bingo_main'});
     });
 
     socket.on('disconnect', function(){
       console.log('🔌 Socket disconnected');
     });
 
-    // ✅ Server tells us the full current state on connect
     socket.on('game_state_update', function(data){
       console.log('🎮 Game state update:', data);
-      serverPlayerCount = data.total_players || 0;
-      updatePlayerDisplays(serverPlayerCount);
       if(data.game_running){
         showWaitScreen();
-        // Replay all called numbers so late joiners see full board
-        if(data.called_numbers && data.called_numbers.length){
-          data.called_numbers.forEach(function(n){
-            waitGame.called.add(n);
-          });
-          waitGame.callCount = data.called_numbers.length;
-          setTxt('w-call-top', waitGame.callCount);
-          if(data.current_number){
-            waitGame.current = data.current_number;
-            waitGame.recentBalls = data.called_numbers.slice(-4);
-            renderWaitCurrent();
-            renderWaitBalls();
-          }
-          renderWaitGrid();
-        }
+      }
+      if(data.total_players){
+        setTxt('s-players', data.total_players);
+        setTxt('w-players-top', data.total_players);
       }
     });
 
-    // ✅ Synchronized countdown — all players see same timer
     socket.on('countdown_update', function(data){
-      console.log('⏳ Countdown:', data.time_left);
+      console.log('⏳ Countdown:', data);
       currentGameId = data.game_id;
       setTxt('game-id-label', data.game_id);
-      serverPlayerCount = data.total_players || 0;
-      updatePlayerDisplays(serverPlayerCount);
-      setTxt('lobby-players', serverPlayerCount);
       timeLeft = data.time_left;
-      // Only sync timer — don't reset it every event
-      clearInterval(timerIv);
-      startTimer();
       showSelectScreen();
-    });
-
-    // ✅ Player count updates in real time
-    socket.on('player_joined', function(data){
-      console.log('👤 Player joined:', data.total_players);
-      serverPlayerCount = data.total_players || 0;
-      updatePlayerDisplays(serverPlayerCount);
-      setTxt('lobby-players', serverPlayerCount);
-    });
-
-    socket.on('player_left', function(data){
-      serverPlayerCount = data.total_players || 0;
-      updatePlayerDisplays(serverPlayerCount);
-      setTxt('lobby-players', serverPlayerCount);
-    });
-
-    // ✅ game_started — server says game begins NOW, all players switch
-    socket.on('game_started', function(data){
-      console.log('🚀 Game started by server!', data);
-      serverPlayerCount = data.total_players || 0;
-      currentGameId = data.game_id;
-      updatePlayerDisplays(serverPlayerCount);
-      // If this player selected cards → go to game screen
-      // If not → show wait screen
-      if(selCards.size > 0 && !game.betDeducted){
-        // They selected cards but game just started — deduct and start
-        _startGameNow();
-      }else if(selCards.size === 0 && !game.betDeducted){
-        showWaitScreen();
-      }
-      // else they're already in game screen
-    });
-
-    // ✅ number_called — ALL players receive the same number at the same time
-    socket.on('number_called', function(data){
-      var n = data.number;
-      console.log('🎲 Number called:', n);
-      // Update wait screen if observer
-      waitGame.called.add(n); waitGame.current = n;
-      waitGame.recentBalls.push(n);
-      if(waitGame.recentBalls.length > 4) waitGame.recentBalls.shift();
-      waitGame.callCount++;
-      setTxt('w-call-top', waitGame.callCount);
-      renderWaitGrid(); renderWaitBalls(); renderWaitCurrent();
-      // Update game screen if player
-      if(game.cards.length > 0){
-        game.called.add(n); game.current = n;
-        game.recentBalls.push(n);
-        if(game.recentBalls.length > 8) game.recentBalls.shift();
-        game.callCount++;
-        setTxt('s-call', game.callCount);
-        speakNumber(n);
-        game.cards.forEach(function(card, ci){
-          card.forEach(function(cell, idx){if(cell.n === n) game.marked[ci].add(idx);});
-          checkWin(ci);
-        });
-        renderNumGrid(); renderRecentBalls(); renderCurrentBall(); renderAllCards();
-      }
-    });
-
-    // ✅ winner_found — server announces winner to ALL players
-    socket.on('winner_found', function(data){
-      console.log('🏆 Winner:', data);
-      stopAutoGame();
-      var isMe = data.user_id === tgUserId;
-      var winnerName = data.winner_name || '—';
-      var winnerCardNum = data.card_num || '—';
-      var prize = data.prize || 0;
-      var totalPlayers = data.total_players || serverPlayerCount;
-
-      setTxt('w-round', round);
-      setTxt('w-players', totalPlayers);
-      setTxt('w-name', winnerName);
-      setTxt('w-card', '#'+winnerCardNum);
-      setTxt('w-prize', prize+' Br');
-      setTxt('w-game-id', currentGameId||'—');
-
-      // Report win to API only for the actual winner
-      if(isMe && game.betDeducted) reportWin(prize, currentGameId);
-
-      // Show winner card
-      if(isMe && game.cards.length > 0){
-        var winCI = data.card_index !== undefined ? data.card_index : 0;
-        renderWinnerCard(winCI);
-      } else {
-        // Show a representative card for observers
-        _renderFakeWinnerCard();
-      }
-
-      showScreen('screen-winner');
-      document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
-      document.getElementById('nav-home').classList.add('active');
-
-      var fill = document.getElementById('dist-fill');
-      var countEl = document.getElementById('next-count');
-      fill.style.transition = 'none'; fill.style.width = '100%';
-      setTimeout(function(){fill.style.transition='width 10s linear'; fill.style.width='0%';}, 50);
-      var nc = 10;
-      countEl.textContent = nc;
-      var wIv = setInterval(function(){
-        nc--; countEl.textContent = nc;
-        if(nc <= 0){clearInterval(wIv);}
-      }, 1000);
-    });
-
-    // ✅ round_finished — server resets for next round
-    socket.on('round_finished', function(data){
-      console.log('🔄 Round finished, new round starting');
-      round++;
-      newRound();
-    });
-
-    // ✅ balance_updated — server pushes new balance
-    socket.on('balance_updated', function(data){
-      if(data.user_id === tgUserId){
-        userMainBalance = data.main_balance;
-        userPlayBalance = data.play_balance;
-        updateBalanceDisplay();
-      }
-    });
-
-    // ✅ min_players_not_met — server restarts countdown
-    socket.on('min_players_not_met', function(data){
-      console.log('⚠️ Not enough players, restarting countdown');
-      var msg = document.getElementById('min-players-msg');
-      msg.style.display = 'block';
-      setTimeout(function(){ msg.style.display = 'none'; }, 5000);
-      // Reset selection
-      selCards = new Set();
-      for(var i=1;i<=400;i++){
-        var el=document.getElementById('cc-'+i);
-        if(el) el.classList.remove('selected','disabled');
-      }
-      setTxt('sel-count','0');
-      setTxt('s-win-sel','0');
-      game.betDeducted = false;
-      timeLeft = 35;
       startTimer();
+    });
+
+    socket.on('player_joined', function(data){
+      console.log('👤 Player joined:', data);
+      setTxt('s-players', data.total_players);
+      setTxt('w-players-top', data.total_players);
     });
 
   }catch(e){
     console.log('❌ Socket init error:', e.message);
   }
 }
-
-// ✅ Update all player count displays
-function updatePlayerDisplays(count){
-  setTxt('s-players', count);
-  setTxt('w-players-top', count);
-  setTxt('lobby-players', count);
-}
-
 var COLS = ['B','I','N','G','O'];
 var COL_COLORS = {B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
 var COL_TEXT = {B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
@@ -777,12 +580,14 @@ function initTelegram(){
       if(wa.initDataUnsafe&&wa.initDataUnsafe.user){
         tgUser=wa.initDataUnsafe.user;
         tgUserId=tgUser.id;
+        // ✅ FIX: Send name to server so leaderboard shows names
         updateUserName(tgUser.first_name||'');
       }
     }
   }catch(e){}
 }
 
+// ✅ FIX: New function to send user name to server
 async function updateUserName(firstName){
   if(!tgUserId||!firstName||!apiAvailable) return;
   try{
@@ -790,14 +595,16 @@ async function updateUserName(firstName){
       method:'POST',headers:apiHeadersPost,
       body:JSON.stringify({user_id:tgUserId, first_name:firstName})
     });
-  }catch(e){}
+    console.log('✅ Name updated:', firstName);
+  }catch(e){
+    console.log('❌ updateName error:', e.message);
+  }
 }
 
 /* ══════════════════════════════════════════
    API CALLS
 ══════════════════════════════════════════ */
 var apiHeaders = {'ngrok-skip-browser-warning':'true','Content-Type':'application/json'};
-var apiHeadersPost = {'ngrok-skip-browser-warning':'true','Content-Type':'application/json'};
 
 async function fetchBalance(){
   if(!tgUserId) return;
@@ -1079,26 +886,24 @@ function generateGameId(){
 
 /* ══════════════════════════════════════════
    SYNCHRONIZED TIMER + GAME STATE
-   Timer is now server-driven via Socket.IO
 ══════════════════════════════════════════ */
 async function checkGameState(){
   var state = await fetchGameState();
   if(state&&state.game_running){
-    serverPlayerCount = state.total_players || 0;
+    // Game already running on server → show wait screen
     showWaitScreen();
     timeLeft = state.time_left||35;
     currentGameId = state.game_id;
     setTxt('game-id-label', currentGameId||'—');
-    updatePlayerDisplays(serverPlayerCount);
   } else if(state&&!state.game_running){
+    // Use server time_left for sync
     timeLeft = state.time_left||35;
     currentGameId = state.game_id||generateGameId();
-    serverPlayerCount = state.total_players || 0;
     setTxt('game-id-label', currentGameId);
-    updatePlayerDisplays(serverPlayerCount);
     showSelectScreen();
     startTimer();
   } else {
+    // API not available, use local
     currentGameId = generateGameId();
     setTxt('game-id-label', currentGameId);
     showSelectScreen();
@@ -1112,6 +917,7 @@ function showWaitScreen(){
   document.getElementById('select-area').style.display='none';
   document.getElementById('wait-area').style.display='flex';
   document.getElementById('home-topbar').style.display='none';
+  // start live number calling animation for observers
   startWaitDraw();
 }
 
@@ -1123,9 +929,24 @@ function showSelectScreen(){
 }
 
 function startWaitDraw(){
-  // Only animate locally; real numbers come from socket 'number_called'
   stopWaitDraw();
+  waitGame.called=new Set(); waitGame.current=null; waitGame.recentBalls=[]; waitGame.callCount=0;
   renderWaitGrid();
+  waitGame.autoIv = setInterval(function(){
+    if(waitGame.called.size>=75){ stopWaitDraw(); return; }
+    var pool=[];
+    for(var i=1;i<=75;i++) if(!waitGame.called.has(i)) pool.push(i);
+    var n=pool[Math.floor(Math.random()*pool.length)];
+    waitGame.called.add(n); waitGame.current=n;
+    waitGame.recentBalls.push(n);
+    if(waitGame.recentBalls.length>4) waitGame.recentBalls.shift();
+    waitGame.callCount++;
+    speakNumber(n);
+    setTxt('w-call-top', waitGame.callCount);
+    renderWaitGrid();
+    renderWaitBalls();
+    renderWaitCurrent();
+  }, 2000);
 }
 
 function stopWaitDraw(){ clearInterval(waitGame.autoIv); waitGame.autoIv=null; }
@@ -1186,6 +1007,7 @@ function toggleCard(n){
     document.getElementById('cc-'+n).classList.remove('selected');
   }else{
     if(selCards.size>=2) return;
+    // Check balance: play first, then main
     var totalAvail = userPlayBalance + userMainBalance;
     if(apiAvailable && selCards.size===1 && totalAvail<20){
       alert('⚠️ Insufficient balance for 2 cards!'); return;
@@ -1200,6 +1022,7 @@ function toggleCard(n){
     selCards.forEach(function(s){document.getElementById('cc-'+s).classList.add('selected');});
   }
   document.getElementById('sel-count').textContent=selCards.size;
+  // BET is always 10 (fixed) - only WIN updates based on cards selected
   var winAmt = Math.round(selCards.size*10*0.8);
   setTxt('s-win-sel', winAmt);
   setTxt('s-win-game', winAmt);
@@ -1219,36 +1042,19 @@ function startTimer(){
 
 /* ══════════════════════════════════════════
    START GAME
-   ✅ MINIMUM 2 PLAYERS CHECK
 ══════════════════════════════════════════ */
 async function startGame(){
   clearInterval(timerIv);
   var cardNums=Array.from(selCards);
-
-  // ✅ Minimum players check: server will emit min_players_not_met if < 2
-  // We also check locally with the real server count
   if(cardNums.length===0){
-    // Observer with no cards — check if game should start
-    if(serverPlayerCount < 2){
-      // Not enough players — tell server, restart countdown
-      _handleNotEnoughPlayers();
-      return;
-    }
+    // Auto start with no cards = just go to wait
     showWaitScreen();
     return;
   }
 
-  // ✅ Check server player count (includes this player about to join)
-  // serverPlayerCount at this moment = players who already registered cards
-  // After this player joins it becomes serverPlayerCount+1
-  // We need at least 2 total, so if serverPlayerCount+1 < 2 → not enough
-  var totalAfterJoin = serverPlayerCount + (game.betDeducted ? 0 : 1);
-  if(apiAvailable && totalAfterJoin < 2){
-    _handleNotEnoughPlayers();
-    return;
-  }
-
   var betAmount=cardNums.length*10;
+
+  // Use play wallet first, then main if not enough
   var deducted = await deductBet(betAmount);
   if(!deducted){ startTimer(); return; }
 
@@ -1259,22 +1065,13 @@ async function startGame(){
   game.wonLines=game.cards.map(function(){return new Set();});
   game.called=new Set(); game.current=null; game.recentBalls=[]; game.callCount=0;
   game.winAmount=Math.round(betAmount*0.8);
-  game.totalPlayers=serverPlayerCount;
+  game.totalPlayers=0; // will be updated from API
   game.betDeducted=true;
 
+  // Record game played
   recordGamePlayed(game.gameId, cardNums);
 
-  // ✅ Notify server that this player is ready (triggers game_started if enough players)
-  if(socket && socket.connected){
-    socket.emit('player_ready', {
-      user_id: tgUserId,
-      game_id: currentGameId,
-      cards: cardNums,
-      name: tgUser ? tgUser.first_name : 'Player'
-    });
-  }
-
-  setTxt('s-players', serverPlayerCount);
+  setTxt('s-players', game.totalPlayers);
   setTxt('game-id-game', game.gameId||'—');
   setTxt('card1-id', cardNums[0]);
   renderCardHeader('card1-header');
@@ -1291,52 +1088,7 @@ async function startGame(){
 
   showScreen('screen-game');
   renderNumGrid(); renderAllCards();
-  // ✅ Don't start local auto game — wait for server 'game_started' + 'number_called'
-}
-
-// ✅ Internal: start game locally once server confirms
-function _startGameNow(){
-  var cardNums = Array.from(selCards);
-  if(cardNums.length === 0) return;
-  setTxt('s-players', serverPlayerCount);
-  showScreen('screen-game');
-  renderNumGrid(); renderAllCards();
-  // Numbers will come via socket 'number_called'
-}
-
-// ✅ Handle not enough players — reset & restart
-function _handleNotEnoughPlayers(){
-  var msg = document.getElementById('min-players-msg');
-  msg.style.display = 'block';
-  setTimeout(function(){ msg.style.display = 'none'; }, 5000);
-
-  // Refund if bet was deducted
-  if(game.betDeducted && tgUserId && apiAvailable){
-    var refundAmt = Array.from(selCards).length * 10;
-    fetch(API_BASE+'/api/refund', {
-      method:'POST', headers: apiHeaders,
-      body: JSON.stringify({user_id: tgUserId, amount: refundAmt})
-    }).catch(function(){});
-  }
-
-  selCards = new Set();
-  game.betDeducted = false;
-  for(var i=1;i<=400;i++){
-    var el=document.getElementById('cc-'+i);
-    if(el) el.classList.remove('selected','disabled');
-  }
-  setTxt('sel-count','0');
-  setTxt('s-win-sel','0');
-  timeLeft = 35;
-  currentGameId = generateGameId();
-  setTxt('game-id-label', currentGameId);
-  showSelectScreen();
-  startTimer();
-
-  // Tell server to restart countdown
-  if(socket && socket.connected){
-    socket.emit('restart_countdown', {game_id: currentGameId});
-  }
+  if(game.autoRunning) startAutoGame();
 }
 
 /* ══════════════════════════════════════════
@@ -1438,22 +1190,8 @@ function speakNumber(n){
   window.speechSynthesis.speak(u);
 }
 
-// ✅ drawBall is now only called by server via 'number_called' socket event
-// Kept here for fallback if socket disconnects
 function drawBall(){
-  if(game.called.size>=75){
-    // Notify server of win if local fallback
-    if(socket && socket.connected){
-      socket.emit('declare_winner', {
-        user_id: tgUserId,
-        game_id: currentGameId,
-        name: tgUser ? tgUser.first_name : 'Player',
-        card_num: game.cardNums[0]||'—',
-        prize: game.winAmount
-      });
-    }
-    return;
-  }
+  if(game.called.size>=75){triggerWinner();return;}
   var pool=[];
   for(var i=1;i<=75;i++) if(!game.called.has(i)) pool.push(i);
   var n=pool[Math.floor(Math.random()*pool.length)];
@@ -1462,6 +1200,7 @@ function drawBall(){
   if(game.recentBalls.length>8) game.recentBalls.shift();
   game.callCount++;
   setTxt('s-call', game.callCount);
+  // Speak immediately as soon as ball is drawn
   speakNumber(n);
   game.cards.forEach(function(card,ci){
     card.forEach(function(cell,idx){if(cell.n===n) game.marked[ci].add(idx);});
@@ -1486,30 +1225,12 @@ function checkWin(ci){
   var nw=new Set();
   lines.forEach(function(line){if(line.every(function(i){return game.marked[ci].has(i);})) nw.add(line);});
   game.wonLines[ci]=nw;
-  if(nw.size>prev){
-    stopAutoGame();
-    // ✅ Emit win to server instead of triggering locally
-    if(socket && socket.connected){
-      socket.emit('declare_winner', {
-        user_id: tgUserId,
-        game_id: currentGameId,
-        card_index: ci,
-        name: tgUser ? tgUser.first_name : 'Player',
-        card_num: game.cardNums[ci]||'—',
-        prize: game.winAmount,
-        total_players: serverPlayerCount
-      });
-    } else {
-      // Fallback if socket not connected
-      triggerWinnerLocal(ci);
-    }
-    return true;
-  }
+  if(nw.size>prev){stopAutoGame(); triggerWinner(ci); return true;}
   return false;
 }
 
 /* ══════════════════════════════════════════
-   WINNER (local fallback only)
+   WINNER
 ══════════════════════════════════════════ */
 function renderWinnerCard(ci){
   var card=game.cards[ci];
@@ -1527,50 +1248,51 @@ function renderWinnerCard(ci){
   document.getElementById('w-card-box').style.display='block';
 }
 
-function _renderFakeWinnerCard(){
-  var fakeCard=generateCard();
-  var fakeMarked=new Set([12]);
-  for(var i=0;i<30;i++){
-    var rn=Math.floor(Math.random()*75)+1;
-    fakeCard.forEach(function(cell,idx){if(cell.n===rn) fakeMarked.add(idx);});
-  }
-  var fakeWins=new Set();
-  var lines=[];
-  for(var r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
-  for(var c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
-  lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
-  lines.forEach(function(line){if(line.every(function(i){return fakeMarked.has(i);})) line.forEach(function(i){fakeWins.add(i);});});
-  document.getElementById('w-card-hdr').innerHTML=COLS.map(function(L){return '<div class="wch '+L+'">'+L+'</div>';}).join('');
-  document.getElementById('w-card-grid').innerHTML=fakeCard.map(function(cell,idx){
-    var isFree=cell.n==='★';
-    var isWin=fakeWins.has(idx);
-    var isMarked=fakeMarked.has(idx);
-    var cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
-    return '<div class="'+cls+'">'+cell.n+'</div>';
-  }).join('');
-  document.getElementById('w-card-box').style.display='block';
-}
-
-function triggerWinnerLocal(ci){
+function triggerWinner(ci){
   stopAutoGame();
   var isPlayer=ci!==undefined;
   var winnerName=isPlayer?((tgUser&&tgUser.first_name)||'You'):'—';
   var winnerCardNum=isPlayer?game.cardNums[ci]:'—';
-  var totalPot=serverPlayerCount*10;
+  var totalPot=game.totalPlayers*10;
   var prize=Math.round(totalPot*0.8);
 
   setTxt('w-round', round);
-  setTxt('w-players', serverPlayerCount);
+  setTxt('w-players', game.totalPlayers);
   setTxt('w-name', winnerName);
   setTxt('w-card', '#'+winnerCardNum);
   setTxt('w-prize', prize+' Br');
   setTxt('w-game-id', game.gameId||'—');
 
   if(isPlayer&&game.betDeducted) reportWin(prize, game.gameId);
-  if(isPlayer) renderWinnerCard(ci);
-  else _renderFakeWinnerCard();
+
+  if(isPlayer){
+    renderWinnerCard(ci);
+  }else{
+    var fakeCard=generateCard();
+    var fakeMarked=new Set([12]);
+    for(var i=0;i<30;i++){
+      var rn=Math.floor(Math.random()*75)+1;
+      fakeCard.forEach(function(cell,idx){if(cell.n===rn) fakeMarked.add(idx);});
+    }
+    var fakeWins=new Set();
+    var lines=[];
+    for(var r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
+    for(var c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
+    lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
+    lines.forEach(function(line){if(line.every(function(i){return fakeMarked.has(i);})) line.forEach(function(i){fakeWins.add(i);});});
+    document.getElementById('w-card-hdr').innerHTML=COLS.map(function(L){return '<div class="wch '+L+'">'+L+'</div>';}).join('');
+    document.getElementById('w-card-grid').innerHTML=fakeCard.map(function(cell,idx){
+      var isFree=cell.n==='★';
+      var isWin=fakeWins.has(idx);
+      var isMarked=fakeMarked.has(idx);
+      var cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
+      return '<div class="'+cls+'">'+cell.n+'</div>';
+    }).join('');
+    document.getElementById('w-card-box').style.display='block';
+  }
 
   showScreen('screen-winner');
+  // keep bottom nav active on home
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
   document.getElementById('nav-home').classList.add('active');
 
@@ -1578,6 +1300,7 @@ function triggerWinnerLocal(ci){
   var countEl=document.getElementById('next-count');
   fill.style.transition='none'; fill.style.width='100%';
   setTimeout(function(){fill.style.transition='width 10s linear'; fill.style.width='0%';},50);
+
   var nc=10;
   countEl.textContent=nc;
   var wIv=setInterval(function(){
@@ -1604,13 +1327,6 @@ function newRound(){
   showSelectScreen();
   fetchBalance();
   startTimer();
-
-  // Reset wait game state
-  waitGame.called=new Set(); waitGame.current=null;
-  waitGame.recentBalls=[]; waitGame.callCount=0;
-  game.called=new Set(); game.current=null;
-  game.recentBalls=[]; game.callCount=0;
-  game.cards=[]; game.marked=[]; game.wonLines=[];
 }
 
 /* ══════════════════════════════════════════
