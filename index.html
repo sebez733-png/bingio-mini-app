@@ -209,7 +209,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 
   <!-- ══ SCREEN: HOME (select cards or wait) ══ -->
   <div class="screen active" id="screen-home">
-    <div class="topbar">
+    <div class="topbar" id="home-topbar">
       <div class="stat-box"><div class="stat-label">MAIN</div><div class="stat-val green" id="s-main">—</div></div>
       <div class="stat-box"><div class="stat-label">PLAY</div><div class="stat-val green" id="s-play">—</div></div>
       <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val orange">10</div></div>
@@ -282,7 +282,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val orange">10</div></div>
       <div class="stat-box"><div class="stat-label">CALL(የተጠሩ)</div><div class="stat-val yellow" id="s-call">0</div></div>
     </div>
-    <div class="game-id-bar">Game ID: <span id="game-id-game">—</span></div>
     <div class="main">
       <div class="left-col">
         <div class="bingo-header-row">
@@ -846,6 +845,7 @@ var waitGame = {called:new Set(), current:null, recentBalls:[], callCount:0, aut
 function showWaitScreen(){
   document.getElementById('select-area').style.display='none';
   document.getElementById('wait-area').style.display='flex';
+  document.getElementById('home-topbar').style.display='none';
   // start live number calling animation for observers
   startWaitDraw();
 }
@@ -853,6 +853,7 @@ function showWaitScreen(){
 function showSelectScreen(){
   document.getElementById('select-area').style.display='';
   document.getElementById('wait-area').style.display='none';
+  document.getElementById('home-topbar').style.display='flex';
   stopWaitDraw();
 }
 
