@@ -230,7 +230,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 
     <!-- Wait area (game running - show numbers live but no card) -->
     <div id="wait-area" style="display:none;flex:1;flex-direction:column;">
-      <div class="topbar" style="padding:6px 4px;">
+      <div class="topbar">
         <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="w-win-top">0</div></div>
         <div class="stat-box"><div class="stat-label">PLAYERS(ተጫዋቾች)</div><div class="stat-val" id="w-players-top">0</div></div>
         <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val orange">10</div></div>
@@ -261,7 +261,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
             </div>
             <div class="ctrl-item">
               <span class="ctrl-lbl blue">🔊</span>
-              <div class="toggle blue-on" onclick="toggleSound()"></div>
+              <div class="toggle blue-on" id="wait-sound-toggle" onclick="toggleSoundWait()"></div>
             </div>
           </div>
           <!-- Wait message in card area -->
@@ -1269,6 +1269,12 @@ function toggleAuto(){
 function toggleSound(){
   soundOn=!soundOn;
   document.getElementById('sound-toggle').classList.toggle('blue-on',soundOn);
+}
+
+function toggleSoundWait(){
+  soundOn=!soundOn;
+  var wt=document.getElementById('wait-sound-toggle');
+  if(wt) wt.classList.toggle('blue-on',soundOn);
 }
 
 function startAutoGame(){
