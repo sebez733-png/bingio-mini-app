@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>Bingo Mini App</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -468,6 +470,59 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
    CONFIG
 ══════════════════════════════════════════ */
 var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+  var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+
+// ✅ NEW: SocketIO connection for real-time sync
+var socket = null;
+
+function initSocket(){
+  try{
+    socket = io(API_BASE, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10
+    });
+
+    socket.on('connect', function(){
+      console.log('🔌 Socket connected!');
+      socket.emit('join_room', {room: 'bingo_main'});
+    });
+
+    socket.on('disconnect', function(){
+      console.log('🔌 Socket disconnected');
+    });
+
+    socket.on('game_state_update', function(data){
+      console.log('🎮 Game state update:', data);
+      if(data.game_running){
+        showWaitScreen();
+      }
+      if(data.total_players){
+        setTxt('s-players', data.total_players);
+        setTxt('w-players-top', data.total_players);
+      }
+    });
+
+    socket.on('countdown_update', function(data){
+      console.log('⏳ Countdown:', data);
+      currentGameId = data.game_id;
+      setTxt('game-id-label', data.game_id);
+      timeLeft = data.time_left;
+      showSelectScreen();
+      startTimer();
+    });
+
+    socket.on('player_joined', function(data){
+      console.log('👤 Player joined:', data);
+      setTxt('s-players', data.total_players);
+      setTxt('w-players-top', data.total_players);
+    });
+
+  }catch(e){
+    console.log('❌ Socket init error:', e.message);
+  }
+}
 var COLS = ['B','I','N','G','O'];
 var COL_COLORS = {B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
 var COL_TEXT = {B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
@@ -1316,6 +1371,7 @@ function showScreen(id){
 ══════════════════════════════════════════ */
 buildGrid();
 initTelegram();
+initSocket();
 fetchBalance().then(function(){
   updateUserInfo();
   checkGameState();
