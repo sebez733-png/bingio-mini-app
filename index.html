@@ -12,9 +12,15 @@
   --orange:#ff6b35;--green:#00c875;--blue:#4a9eff;
   --purple:#9b59b6;--pink:#e91e8c;--yellow:#ffd700;
   --text:#fff;--muted:rgba(255,255,255,0.5);
+  --red:#e74c3c;
 }
 body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
 .app{max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:60px;}
+
+/* ── CONNECTION BANNER ── */
+.conn-banner{background:var(--red);color:#fff;text-align:center;padding:6px 10px;font-size:11px;font-weight:600;display:none;z-index:200;}
+.conn-banner.ok{background:var(--green);}
+.conn-banner.warn{background:var(--orange);}
 
 /* ── SCREENS ── */
 .screen{display:none;flex:1;flex-direction:column;}
@@ -60,23 +66,17 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .selected-info strong{color:var(--text);font-size:14px;}
 .no-balance-msg{background:#e74c3c;color:#fff;text-align:center;padding:8px 12px;font-size:11px;font-weight:600;display:none;}
 
-/* ── WAIT SCREEN (game in progress) ── */
+/* ── WAIT SCREEN ── */
 .wait-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
 .wait-icon{font-size:60px;margin-bottom:16px;animation:spin 3s linear infinite;}
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-.wait-title{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:8px;}
-.wait-amharic{font-size:15px;color:var(--green);margin-top:6px;}
 
 /* ── GAME SCREEN ── */
 .main{display:flex;flex:1;overflow:hidden;}
 .left-col{flex:1;padding:4px 2px 4px 4px;overflow:hidden;display:flex;flex-direction:column;}
 .bingo-header-row{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-bottom:2px;flex-shrink:0;}
 .bh{text-align:center;font-size:10px;font-weight:700;padding:3px 1px;border-radius:4px;color:#fff;}
-.bh.B{background:#4a9eff;}
-.bh.I{background:#9b59b6;}
-.bh.N{background:#e91e8c;}
-.bh.G{background:#ffd700;color:#000;}
-.bh.O{background:#ff6b35;color:#000;}
+.bh.B{background:#4a9eff;}.bh.I{background:#9b59b6;}.bh.N{background:#e91e8c;}.bh.G{background:#ffd700;color:#000;}.bh.O{background:#ff6b35;color:#000;}
 .num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;flex:1;}
 .num-cell{border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;background:var(--bg2);color:var(--text);border:1px solid rgba(255,107,53,0.35);transition:all .2s;}
 .num-cell.called{color:#000;border-color:transparent;}
@@ -84,41 +84,27 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .right-col{width:150px;padding:4px 4px 4px 2px;display:flex;flex-direction:column;gap:4px;overflow:hidden;}
 .recent-balls{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;}
 .rball{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-direction:column;}
-.rball .rl{font-size:6px;opacity:.8;}
-.rball .rn{font-size:9px;}
+.rball .rl{font-size:6px;opacity:.8;}.rball .rn{font-size:9px;}
 .current-box{background:var(--bg2);border-radius:8px;padding:5px 6px;text-align:center;}
 .current-label{font-size:9px;color:var(--muted);margin-bottom:2px;}
 .current-ball-big{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:54px;height:54px;border-radius:50%;font-weight:800;margin:auto;}
-.cbl{font-size:9px;opacity:.9;}
-.cbn{font-size:22px;line-height:1;}
-
-/* sound + auto row */
+.cbl{font-size:9px;opacity:.9;}.cbn{font-size:22px;line-height:1;}
 .controls-row{display:flex;gap:4px;align-items:center;background:var(--bg2);border-radius:8px;padding:4px 6px;}
 .ctrl-item{display:flex;align-items:center;gap:4px;flex:1;}
 .ctrl-lbl{font-size:9px;font-weight:600;}
-.ctrl-lbl.green{color:var(--green);}
-.ctrl-lbl.blue{color:var(--blue);}
+.ctrl-lbl.green{color:var(--green);}.ctrl-lbl.blue{color:var(--blue);}
 .toggle{width:32px;height:18px;border-radius:9px;background:rgba(255,255,255,0.2);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
-.toggle.on{background:var(--green);}
-.toggle.blue-on{background:var(--blue);}
-.toggle.locked{pointer-events:none;opacity:0.85;}
+.toggle.on{background:var(--green);}.toggle.blue-on{background:var(--blue);}.toggle.locked{pointer-events:none;opacity:0.85;}
 .toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s;}
 .toggle.on::after,.toggle.blue-on::after{left:16px;}
-
 .card-box{background:var(--bg2);border-radius:8px;padding:5px;}
 .card-id-lbl{text-align:center;font-size:8px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;}
 .card-hdr{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-bottom:2px;}
 .ch{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;margin:auto;}
-.ch.B{background:#4a9eff;}
-.ch.I{background:#9b59b6;}
-.ch.N{background:#e91e8c;}
-.ch.G{background:#ffd700;color:#000;}
-.ch.O{background:#ff6b35;color:#000;}
+.ch.B{background:#4a9eff;}.ch.I{background:#9b59b6;}.ch.N{background:#e91e8c;}.ch.G{background:#ffd700;color:#000;}.ch.O{background:#ff6b35;color:#000;}
 .card-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;}
 .cc{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,0.08);transition:all .2s;}
-.cc.marked{background:var(--green);color:#000;}
-.cc.free{background:var(--purple);color:#fff;}
-.cc.win-cell{background:var(--yellow);color:#000;box-shadow:0 0 4px var(--yellow);}
+.cc.marked{background:var(--green);color:#000;}.cc.free{background:var(--purple);color:#fff;}.cc.win-cell{background:var(--yellow);color:#000;box-shadow:0 0 4px var(--yellow);}
 .no-card{background:var(--bg2);border-radius:8px;padding:8px;display:flex;align-items:center;justify-content:center;opacity:.4;min-height:30px;}
 
 /* ── WINNER SCREEN ── */
@@ -132,16 +118,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .winner-card-box{background:var(--bg2);border:2px solid var(--yellow);border-radius:12px;padding:10px;margin:4px 0 10px;width:100%;max-width:260px;}
 .winner-card-hdr{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
 .wch{height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin:auto;width:24px;}
-.wch.B{background:#4a9eff;}
-.wch.I{background:#9b59b6;}
-.wch.N{background:#e91e8c;}
-.wch.G{background:#ffd700;color:#000;}
-.wch.O{background:#ff6b35;color:#000;}
+.wch.B{background:#4a9eff;}.wch.I{background:#9b59b6;}.wch.N{background:#e91e8c;}.wch.G{background:#ffd700;color:#000;}.wch.O{background:#ff6b35;color:#000;}
 .winner-card-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
 .wcc{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,0.08);}
-.wcc.wmarked{background:var(--green);color:#000;}
-.wcc.wfree{background:var(--purple);color:#fff;}
-.wcc.wwin{background:var(--yellow);color:#000;box-shadow:0 0 6px var(--yellow);}
+.wcc.wmarked{background:var(--green);color:#000;}.wcc.wfree{background:var(--purple);color:#fff;}.wcc.wwin{background:var(--yellow);color:#000;box-shadow:0 0 6px var(--yellow);}
 .prize-box{background:var(--bg2);border:2px solid var(--yellow);border-radius:16px;padding:14px 28px;margin:6px 0;}
 .prize-label{font-size:12px;color:var(--muted);margin-bottom:4px;}
 .prize-amount{font-size:32px;font-weight:900;color:var(--yellow);}
@@ -167,9 +147,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .table-head span{font-size:9px;font-weight:700;color:var(--orange);text-transform:uppercase;}
 .table-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:8px 10px;border-top:1px solid rgba(255,255,255,0.05);}
 .table-row span{font-size:11px;color:var(--text);}
-.table-row span.green{color:var(--green);}
-.table-row span.red{color:#e74c3c;}
-.table-row span.muted{color:var(--muted);}
+.table-row span.green{color:var(--green);}.table-row span.red{color:#e74c3c;}.table-row span.muted{color:var(--muted);}
 .empty-row{padding:16px;text-align:center;font-size:12px;color:var(--muted);}
 
 /* ── TOP WINNERS ── */
@@ -184,9 +162,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .rank-head span{font-size:9px;font-weight:700;color:var(--yellow);text-transform:uppercase;}
 .rank-row{display:grid;grid-template-columns:40px 1fr 80px;padding:10px 12px;border-top:1px solid rgba(255,255,255,0.05);align-items:center;}
 .rank-num{font-size:14px;font-weight:800;}
-.rank-num.gold{color:var(--yellow);}
-.rank-num.silver{color:#aaa;}
-.rank-num.bronze{color:#cd7f32;}
+.rank-num.gold{color:var(--yellow);}.rank-num.silver{color:#aaa;}.rank-num.bronze{color:#cd7f32;}
 .rank-name{font-size:13px;font-weight:600;}
 .rank-val{font-size:12px;font-weight:700;color:var(--green);text-align:right;}
 .my-rank-box{background:rgba(255,107,53,0.15);border:1px solid var(--orange);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
@@ -207,7 +183,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 <body>
 <div class="app">
 
-  <!-- ══ SCREEN: HOME (select cards or wait) ══ -->
+  <!-- 🔧 FIX: Connection status banner -->
+  <div class="conn-banner" id="conn-banner">⏳ Connecting to server...</div>
+
+  <!-- ══ SCREEN: HOME ══ -->
   <div class="screen active" id="screen-home">
     <div class="topbar" id="home-topbar">
       <div class="stat-box"><div class="stat-label">MAIN</div><div class="stat-val green" id="s-main">—</div></div>
@@ -217,7 +196,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       <div class="stat-box"><div class="stat-label">TIME LEFT</div><div class="stat-val yellow" id="s-time">35s</div></div>
     </div>
 
-    <!-- Card selection (shown when no game running) -->
     <div id="select-area">
       <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient PLAY balance! በቂ ሂሳብ የለም!</div>
       <div class="game-id-bar">Game ID: <span id="game-id-label">—</span></div>
@@ -228,7 +206,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       </div>
     </div>
 
-    <!-- Wait area (game running - show numbers live but no card) -->
     <div id="wait-area" style="display:none;flex:1;flex-direction:column;">
       <div class="topbar">
         <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="w-win-top">0</div></div>
@@ -237,14 +214,12 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
         <div class="stat-box"><div class="stat-label">CALL(የተጠሩ)</div><div class="stat-val yellow" id="w-call-top">0</div></div>
       </div>
       <div class="main" style="flex:1;">
-        <!-- Left: live number grid -->
         <div class="left-col">
           <div class="bingo-header-row">
             <div class="bh B">B</div><div class="bh I">I</div><div class="bh N">N</div><div class="bh G">G</div><div class="bh O">O</div>
           </div>
           <div class="num-grid" id="wait-num-grid"></div>
         </div>
-        <!-- Right: recent ball + current + auto + wait message -->
         <div class="right-col">
           <div class="recent-balls" id="wait-recent-balls"></div>
           <div class="current-box">
@@ -264,7 +239,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
               <div class="toggle blue-on" id="wait-sound-toggle" onclick="toggleSoundWait()"></div>
             </div>
           </div>
-          <!-- Wait message in card area -->
           <div style="flex:1;background:var(--bg2);border-radius:8px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px solid rgba(255,255,255,0.08);">
             <div style="font-size:13px;font-weight:700;color:var(--blue);line-height:1.5;margin-bottom:8px;">Please wait for this game to be completed</div>
             <div style="font-size:12px;color:var(--green);line-height:1.6;">እባክዎ ይህ ጨዋታ እስኪጠናቀቅ ይጠብቁ</div>
@@ -298,7 +272,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
             <span class="cbn" id="cb-num">-</span>
           </div>
         </div>
-        <!-- Auto + Sound controls -->
         <div class="controls-row">
           <div class="ctrl-item">
             <span class="ctrl-lbl green">Auto</span>
@@ -378,7 +351,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
         <div class="table-head">
           <span>GAME</span><span>ENTRY</span><span>STATUS</span><span>RESULT</span>
         </div>
-        <div id="p-history-rows"><div class="empty-row">No games yet</div></div>
+        <div id="p-history-rows"><div class="empty-row">Loading...</div></div>
       </div>
     </div>
   </div>
@@ -440,7 +413,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
         <div class="table-head">
           <span>TYPE</span><span>AMOUNT</span><span>STATUS</span><span>DATE</span>
         </div>
-        <div id="wl-tx-rows"><div class="empty-row">No transactions yet</div></div>
+        <div id="wl-tx-rows"><div class="empty-row">Loading...</div></div>
       </div>
     </div>
   </div>
@@ -467,11 +440,12 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 /* ══════════════════════════════════════════
    CONFIG
 ══════════════════════════════════════════ */
+// 🔧 FIX: Your ngrok URL — UPDATE THIS when ngrok restarts!
 var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+
 var COLS = ['B','I','N','G','O'];
 var COL_COLORS = {B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
 var COL_TEXT = {B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
-var FAKE_NAMES = ['Abebe','Kebede','Tigist','Meron','Dawit','Sara','Yonas','Hana','Biruk','Liya'];
 
 /* ══ AMHARIC VOICE NUMBERS ══ */
 var AM_NUMBERS = {
@@ -525,148 +499,222 @@ function initTelegram(){
       if(wa.initDataUnsafe&&wa.initDataUnsafe.user){
         tgUser=wa.initDataUnsafe.user;
         tgUserId=tgUser.id;
+        console.log('✅ Telegram user:', tgUser.first_name, 'ID:', tgUserId);
+      } else {
+        console.log('⚠️ Telegram WebApp found but no user data. Open from bot!');
       }
+    } else {
+      console.log('⚠️ Telegram WebApp not found. Open from bot!');
     }
-  }catch(e){}
+  }catch(e){
+    console.log('❌ Telegram init error:', e);
+  }
 }
 
 /* ══════════════════════════════════════════
-   API CALLS
+   🔧 FIX: API HEADERS — separate GET and POST
 ══════════════════════════════════════════ */
-var apiHeaders = {'ngrok-skip-browser-warning':'true','Content-Type':'application/json'};
+// 🔧 FIX: GET requests should NOT send Content-Type to avoid preflight
+var apiHeadersGet = {'ngrok-skip-browser-warning':'true'};
+var apiHeadersPost = {'ngrok-skip-browser-warning':'true','Content-Type':'application/json'};
 
-async function fetchBalance(){
-  if(!tgUserId) return;
+/* ══════════════════════════════════════════
+   🔧 FIX: CONNECTION TEST
+══════════════════════════════════════════ */
+function showConnBanner(msg, type){
+  var b = document.getElementById('conn-banner');
+  b.textContent = msg;
+  b.className = 'conn-banner';
+  if(type === 'ok') b.classList.add('ok');
+  else if(type === 'warn') b.classList.add('warn');
+  b.style.display = 'block';
+  // Auto-hide after 4 seconds for success
+  if(type === 'ok'){
+    setTimeout(function(){ b.style.display = 'none'; }, 4000);
+  }
+}
+
+async function testConnection(){
+  showConnBanner('⏳ Connecting to server...', 'warn');
   try{
-    var res = await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{headers:apiHeaders});
+    var res = await fetch(API_BASE+'/api/ping', {headers: apiHeadersGet});
     var data = await res.json();
+    if(data.success){
+      apiAvailable = true;
+      showConnBanner('✅ Connected to server!', 'ok');
+      console.log('✅ API ping success:', data);
+      return true;
+    } else {
+      apiAvailable = false;
+      showConnBanner('❌ Server returned error', '');
+      console.log('❌ API ping error:', data);
+      return false;
+    }
+  }catch(e){
+    apiAvailable = false;
+    showConnBanner('❌ Cannot reach server! Check ngrok URL.', '');
+    console.log('❌ API ping failed:', e.message);
+    console.log('💡 Make sure: 1) Bot is running  2) ngrok is running  3) URL matches:', API_BASE);
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════
+   API CALLS — with 🔧 FIX: better error handling
+══════════════════════════════════════════ */
+async function fetchBalance(){
+  if(!tgUserId){
+    console.log('⚠️ fetchBalance: no tgUserId');
+    return;
+  }
+  try{
+    var res = await fetch(API_BASE+'/api/balance?user_id='+tgUserId, {headers: apiHeadersGet});
+    var data = await res.json();
+    console.log('💰 Balance response:', data);
     if(data.success){
       userMainBalance = data.main_balance;
       userPlayBalance = data.play_balance;
       apiAvailable = true;
       updateBalanceDisplay();
+    } else {
+      console.log('⚠️ Balance error:', data.error);
+      if(data.error && data.error.indexOf('not found')>=0){
+        showConnBanner('⚠️ Not registered! Share phone in bot first.', 'warn');
+      }
     }
-  }catch(e){ apiAvailable=false; }
+  }catch(e){
+    console.log('❌ fetchBalance error:', e.message);
+    apiAvailable = false;
+  }
 }
 
 async function fetchGameState(){
   try{
-    var res = await fetch(API_BASE+'/api/game_state',{headers:apiHeaders});
+    var res = await fetch(API_BASE+'/api/game_state', {headers: apiHeadersGet});
     var data = await res.json();
     return data;
-  }catch(e){ return null; }
+  }catch(e){
+    console.log('❌ fetchGameState error:', e.message);
+    return null;
+  }
 }
 
 async function fetchGameHistory(){
   if(!tgUserId) return [];
   try{
-    var res = await fetch(API_BASE+'/api/game_history?user_id='+tgUserId,{headers:apiHeaders});
+    var res = await fetch(API_BASE+'/api/game_history?user_id='+tgUserId, {headers: apiHeadersGet});
     var data = await res.json();
     return data.history||[];
-  }catch(e){ return []; }
+  }catch(e){ console.log('❌ fetchGameHistory error:', e.message); return []; }
 }
 
 async function fetchTopWinners(period, category){
   try{
-    var res = await fetch(API_BASE+'/api/top_winners?period='+period+'&category='+category,{headers:apiHeaders});
+    var res = await fetch(API_BASE+'/api/top_winners?period='+period+'&category='+category, {headers: apiHeadersGet});
     var data = await res.json();
     return data.winners||[];
-  }catch(e){ return []; }
+  }catch(e){ console.log('❌ fetchTopWinners error:', e.message); return []; }
 }
 
 async function fetchMyRank(period, category){
   if(!tgUserId) return null;
   try{
-    var res = await fetch(API_BASE+'/api/my_rank?user_id='+tgUserId+'&period='+period+'&category='+category,{headers:apiHeaders});
+    var res = await fetch(API_BASE+'/api/my_rank?user_id='+tgUserId+'&period='+period+'&category='+category, {headers: apiHeadersGet});
     var data = await res.json();
     return data;
-  }catch(e){ return null; }
+  }catch(e){ console.log('❌ fetchMyRank error:', e.message); return null; }
 }
 
 async function fetchTransactions(){
   if(!tgUserId) return [];
   try{
-    var res = await fetch(API_BASE+'/api/transactions?user_id='+tgUserId,{headers:apiHeaders});
+    var res = await fetch(API_BASE+'/api/transactions?user_id='+tgUserId, {headers: apiHeadersGet});
     var data = await res.json();
     return data.transactions||[];
-  }catch(e){ return []; }
+  }catch(e){ console.log('❌ fetchTransactions error:', e.message); return []; }
 }
 
 async function fetchProfileStats(){
   if(!tgUserId) return null;
   try{
-    var res = await fetch(API_BASE+'/api/profile_stats?user_id='+tgUserId,{headers:apiHeaders});
+    var res = await fetch(API_BASE+'/api/profile_stats?user_id='+tgUserId, {headers: apiHeadersGet});
     var data = await res.json();
+    console.log('📊 Profile stats:', data);
     return data;
-  }catch(e){ return null; }
+  }catch(e){ console.log('❌ fetchProfileStats error:', e.message); return null; }
 }
 
 async function deductBet(amount){
-  if(!tgUserId||!apiAvailable) return true;
+  if(!tgUserId||!apiAvailable) return true; // 🔧 fallback if no API
   try{
     var res = await fetch(API_BASE+'/api/bet',{
-      method:'POST',headers:apiHeaders,
-      body:JSON.stringify({user_id:tgUserId,amount:amount})
+      method:'POST', headers:apiHeadersPost,
+      body:JSON.stringify({user_id:tgUserId, amount:amount})
     });
     var data = await res.json();
+    console.log('💳 Bet response:', data);
     if(data.success){
-      userMainBalance=data.main_balance;
-      userPlayBalance=data.play_balance;
+      userMainBalance = data.main_balance;
+      userPlayBalance = data.play_balance;
       updateBalanceDisplay();
-      game.betDeducted=true;
+      game.betDeducted = true;
       return true;
-    }else{
+    } else {
       alert(data.error||'Insufficient balance');
       return false;
     }
-  }catch(e){ return true; }
+  }catch(e){
+    console.log('❌ deductBet error:', e.message);
+    return true; // 🔧 fallback: let game continue if API down
+  }
 }
 
 async function reportWin(amount, gameId){
   if(!tgUserId||!apiAvailable) return;
   try{
     var res = await fetch(API_BASE+'/api/win',{
-      method:'POST',headers:apiHeaders,
-      body:JSON.stringify({user_id:tgUserId,amount:amount,game_id:gameId})
+      method:'POST', headers:apiHeadersPost,
+      body:JSON.stringify({user_id:tgUserId, amount:amount, game_id:gameId})
     });
     var data = await res.json();
+    console.log('🏆 Win response:', data);
     if(data.success){
-      userMainBalance=data.main_balance;
-      userPlayBalance=data.play_balance;
+      userMainBalance = data.main_balance;
+      userPlayBalance = data.play_balance;
       updateBalanceDisplay();
     }
-  }catch(e){}
+  }catch(e){ console.log('❌ reportWin error:', e.message); }
 }
 
 async function recordGamePlayed(gameId, cardNums){
   if(!tgUserId||!apiAvailable) return;
   try{
     await fetch(API_BASE+'/api/game_played',{
-      method:'POST',headers:apiHeaders,
-      body:JSON.stringify({user_id:tgUserId,game_id:gameId,cards:cardNums})
+      method:'POST', headers:apiHeadersPost,
+      body:JSON.stringify({user_id:tgUserId, game_id:gameId, cards:cardNums})
     });
-  }catch(e){}
+    console.log('🎮 Game recorded:', gameId);
+  }catch(e){ console.log('❌ recordGamePlayed error:', e.message); }
 }
 
 /* ══════════════════════════════════════════
    BALANCE DISPLAY
 ══════════════════════════════════════════ */
 function updateBalanceDisplay(){
-  var mainStr = userMainBalance.toFixed(2);
-  var playStr = userPlayBalance.toFixed(2);
-  var totalStr = (userMainBalance+userPlayBalance).toFixed(2);
-  setTxt('s-main', mainStr);
-  setTxt('s-play', playStr);
-  setTxt('p-main', mainStr); setTxt('p-play', playStr); setTxt('p-total', totalStr);
-  setTxt('tw-main', mainStr); setTxt('tw-play', playStr); setTxt('tw-total', totalStr);
-  setTxt('w-main', mainStr); setTxt('w-play', playStr); setTxt('w-total', totalStr);
-  setTxt('wl-main-sub', mainStr); setTxt('wl-play-sub', playStr);
-  setTxt('wl-total-big', totalStr+' Br');
-  setTxt('p-bal', '💰 '+totalStr+' Br');
-  setTxt('wl-bal', '💰 '+totalStr+' Br');
+  var m = Number(userMainBalance)||0;
+  var p = Number(userPlayBalance)||0;
+  var t = m + p;
+  setTxt('s-main', m); setTxt('s-play', p);
+  setTxt('p-main', m); setTxt('p-play', p); setTxt('p-total', t);
+  setTxt('tw-main', m); setTxt('tw-play', p); setTxt('tw-total', t);
+  setTxt('w-main', m); setTxt('w-play', p); setTxt('w-total', t);
+  setTxt('wl-main-sub', m); setTxt('wl-play-sub', p);
+  setTxt('wl-total-big', t+' Br');
+  setTxt('p-bal', '💰 '+t+' Br');
+  setTxt('wl-bal', '💰 '+t+' Br');
 
   var noBalMsg = document.getElementById('no-balance-msg');
-  if(userPlayBalance<10&&apiAvailable) noBalMsg.style.display='block';
+  if(p<10 && apiAvailable) noBalMsg.style.display='block';
   else noBalMsg.style.display='none';
 }
 
@@ -710,19 +758,22 @@ function navTo(tab){
 ══════════════════════════════════════════ */
 async function loadProfile(){
   updateUserInfo();
+  await fetchBalance(); // 🔧 FIX: refresh balance when opening profile
   updateBalanceDisplay();
   var stats = await fetchProfileStats();
-  if(stats){
+  if(stats && stats.success){
     setTxt('p-played', stats.games_played||0);
     setTxt('p-won', stats.games_won||0);
     setTxt('p-brwon', (stats.total_won||0)+' Br');
     setTxt('p-invited', stats.invited||0);
+  } else {
+    console.log('⚠️ Profile stats not available');
   }
   var history = await fetchGameHistory();
   var rows = document.getElementById('p-history-rows');
   if(!history.length){ rows.innerHTML='<div class="empty-row">No games yet</div>'; return; }
   rows.innerHTML = history.map(function(h){
-    var statusCls = h.status==='Completed'?'green':'muted';
+    var statusCls = h.status==='Won'?'green':'muted';
     var resultCls = h.result&&h.result!=='-'?'green':'muted';
     return '<div class="table-row">'+
       '<span>'+h.game_id+'</span>'+
@@ -751,6 +802,7 @@ function setCategory(c){
 }
 
 async function loadLeaderboard(){
+  await fetchBalance(); // 🔧 FIX: refresh balance
   updateBalanceDisplay();
   var winners = await fetchTopWinners(currentPeriod, currentCategory);
   var myRank = await fetchMyRank(currentPeriod, currentCategory);
@@ -769,541 +821,5 @@ async function loadLeaderboard(){
     }).join('');
   }
 
-  if(myRank){
+  if(myRank && myRank.success){
     setTxt('my-rank', '#'+(myRank.rank||'—'));
-    setTxt('my-rank-val', myRank.value||'—');
-  } else {
-    setTxt('my-rank','#—'); setTxt('my-rank-val','—');
-  }
-
-  var labels = {deposit:'Total Deposit',invite:'Invitations',games:'Games Played'};
-  setTxt('my-rank-val-label', labels[currentCategory]||'Value');
-}
-
-/* ══════════════════════════════════════════
-   WALLET
-══════════════════════════════════════════ */
-async function loadWallet(){
-  updateUserInfo();
-  updateBalanceDisplay();
-  var txs = await fetchTransactions();
-  var rows = document.getElementById('wl-tx-rows');
-  if(!txs.length){ rows.innerHTML='<div class="empty-row">No transactions yet</div>'; return; }
-  rows.innerHTML = txs.map(function(tx){
-    var typeCls = tx.type==='deposit'||tx.type==='bingo_win'?'green':'red';
-    var icon = tx.type==='deposit'?'💳':tx.type==='bingo_win'?'🏆':tx.type==='withdraw'?'💸':'🎮';
-    var date = tx.time?tx.time.split('T')[0]:tx.time||'—';
-    return '<div class="table-row">'+
-      '<span>'+icon+' '+tx.type+'</span>'+
-      '<span class="'+typeCls+'">'+tx.amount+' Br</span>'+
-      '<span class="green">Done</span>'+
-      '<span class="muted">'+date+'</span>'+
-      '</div>';
-  }).join('');
-}
-
-/* ══════════════════════════════════════════
-   GAME ID GENERATOR
-══════════════════════════════════════════ */
-function generateGameId(){
-  var d = new Date();
-  return d.getFullYear()+''+
-    String(d.getMonth()+1).padStart(2,'0')+
-    String(d.getDate()).padStart(2,'0')+'_'+
-    Math.floor(Math.random()*9000+1000);
-}
-
-/* ══════════════════════════════════════════
-   SYNCHRONIZED TIMER + GAME STATE
-══════════════════════════════════════════ */
-async function checkGameState(){
-  var state = await fetchGameState();
-  if(state&&state.game_running){
-    // Game already running on server → show wait screen
-    showWaitScreen();
-    timeLeft = state.time_left||35;
-    currentGameId = state.game_id;
-    setTxt('game-id-label', currentGameId||'—');
-  } else if(state&&!state.game_running){
-    // Use server time_left for sync
-    timeLeft = state.time_left||35;
-    currentGameId = state.game_id||generateGameId();
-    setTxt('game-id-label', currentGameId);
-    showSelectScreen();
-    startTimer();
-  } else {
-    // API not available, use local
-    currentGameId = generateGameId();
-    setTxt('game-id-label', currentGameId);
-    showSelectScreen();
-    startTimer();
-  }
-}
-
-var waitGame = {called:new Set(), current:null, recentBalls:[], callCount:0, autoIv:null};
-
-function showWaitScreen(){
-  document.getElementById('select-area').style.display='none';
-  document.getElementById('wait-area').style.display='flex';
-  document.getElementById('home-topbar').style.display='none';
-  // start live number calling animation for observers
-  startWaitDraw();
-}
-
-function showSelectScreen(){
-  document.getElementById('select-area').style.display='';
-  document.getElementById('wait-area').style.display='none';
-  document.getElementById('home-topbar').style.display='flex';
-  stopWaitDraw();
-}
-
-function startWaitDraw(){
-  stopWaitDraw();
-  waitGame.called=new Set(); waitGame.current=null; waitGame.recentBalls=[]; waitGame.callCount=0;
-  renderWaitGrid();
-  waitGame.autoIv = setInterval(function(){
-    if(waitGame.called.size>=75){ stopWaitDraw(); return; }
-    var pool=[];
-    for(var i=1;i<=75;i++) if(!waitGame.called.has(i)) pool.push(i);
-    var n=pool[Math.floor(Math.random()*pool.length)];
-    waitGame.called.add(n); waitGame.current=n;
-    waitGame.recentBalls.push(n);
-    if(waitGame.recentBalls.length>4) waitGame.recentBalls.shift();
-    waitGame.callCount++;
-    speakNumber(n);
-    setTxt('w-call-top', waitGame.callCount);
-    renderWaitGrid();
-    renderWaitBalls();
-    renderWaitCurrent();
-  }, 2000);
-}
-
-function stopWaitDraw(){ clearInterval(waitGame.autoIv); waitGame.autoIv=null; }
-
-function renderWaitGrid(){
-  var g=document.getElementById('wait-num-grid');
-  if(!g) return;
-  var h='';
-  for(var row=1;row<=15;row++){
-    for(var ci=0;ci<5;ci++){
-      var n=ci*15+row;
-      var L=COLS[ci];
-      if(waitGame.current===n){
-        h+='<div class="num-cell current" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+';border-color:'+COL_COLORS[L]+';box-shadow:0 0 8px '+COL_COLORS[L]+'">'+n+'</div>';
-      }else if(waitGame.called.has(n)){
-        h+='<div class="num-cell called" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+';border-color:'+COL_COLORS[L]+'">'+n+'</div>';
-      }else{
-        h+='<div class="num-cell">'+n+'</div>';
-      }
-    }
-  }
-  g.innerHTML=h;
-}
-
-function renderWaitBalls(){
-  var el=document.getElementById('wait-recent-balls');
-  if(!el) return;
-  el.innerHTML=waitGame.recentBalls.slice(-4).map(function(n){
-    var L=letterFor(n);
-    return '<div class="rball" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+'"><span class="rl">'+L+'</span><span class="rn">'+n+'</span></div>';
-  }).join('');
-}
-
-function renderWaitCurrent(){
-  if(!waitGame.current) return;
-  var n=waitGame.current, L=letterFor(n);
-  var el=document.getElementById('wait-current-big');
-  if(!el) return;
-  el.style.background=COL_COLORS[L]; el.style.color=COL_TEXT[L];
-  el.style.boxShadow='0 0 16px '+COL_COLORS[L];
-  setTxt('wait-cb-letter', L+'-');
-  setTxt('wait-cb-num', n);
-}
-
-/* ══════════════════════════════════════════
-   SELECT SCREEN
-══════════════════════════════════════════ */
-function buildGrid(){
-  var g=document.getElementById('cards-grid');
-  var h='';
-  for(var i=1;i<=400;i++) h+='<div class="card-cell" id="cc-'+i+'" onclick="toggleCard('+i+')">'+i+'</div>';
-  g.innerHTML=h;
-}
-
-function toggleCard(n){
-  if(selCards.has(n)){
-    selCards.delete(n);
-    document.getElementById('cc-'+n).classList.remove('selected');
-  }else{
-    if(selCards.size>=2) return;
-    // Check balance: play first, then main
-    var totalAvail = userPlayBalance + userMainBalance;
-    if(apiAvailable && selCards.size===1 && totalAvail<20){
-      alert('⚠️ Insufficient balance for 2 cards!'); return;
-    }
-    selCards.add(n);
-    document.getElementById('cc-'+n).classList.add('selected');
-  }
-  if(selCards.size>=2){
-    for(var i=1;i<=400;i++) if(!selCards.has(i)) document.getElementById('cc-'+i).classList.add('disabled');
-  }else{
-    for(var i=1;i<=400;i++) document.getElementById('cc-'+i).classList.remove('disabled');
-    selCards.forEach(function(s){document.getElementById('cc-'+s).classList.add('selected');});
-  }
-  document.getElementById('sel-count').textContent=selCards.size;
-  // BET is always 10 (fixed) - only WIN updates based on cards selected
-  var winAmt = Math.round(selCards.size*10*0.8);
-  setTxt('s-win-sel', winAmt);
-  setTxt('s-win-game', winAmt);
-}
-
-function startTimer(){
-  clearInterval(timerIv);
-  var el=document.getElementById('s-time');
-  el.textContent=timeLeft+'s'; el.style.color='var(--yellow)';
-  timerIv=setInterval(function(){
-    timeLeft--;
-    el.textContent=timeLeft+'s';
-    el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
-    if(timeLeft<=0){clearInterval(timerIv); startGame();}
-  },1000);
-}
-
-/* ══════════════════════════════════════════
-   START GAME
-══════════════════════════════════════════ */
-async function startGame(){
-  clearInterval(timerIv);
-  var cardNums=Array.from(selCards);
-  if(cardNums.length===0){
-    // Auto start with no cards = just go to wait
-    showWaitScreen();
-    return;
-  }
-
-  var betAmount=cardNums.length*10;
-
-  // Use play wallet first, then main if not enough
-  var deducted = await deductBet(betAmount);
-  if(!deducted){ startTimer(); return; }
-
-  game.cardNums=cardNums;
-  game.gameId=currentGameId;
-  game.cards=cardNums.map(function(){return generateCard();});
-  game.marked=game.cards.map(function(){return new Set([12]);});
-  game.wonLines=game.cards.map(function(){return new Set();});
-  game.called=new Set(); game.current=null; game.recentBalls=[]; game.callCount=0;
-  game.winAmount=Math.round(betAmount*0.8);
-  game.totalPlayers=0; // will be updated from API
-  game.betDeducted=true;
-
-  // Record game played
-  recordGamePlayed(game.gameId, cardNums);
-
-  setTxt('s-players', game.totalPlayers);
-  setTxt('game-id-game', game.gameId||'—');
-  setTxt('card1-id', cardNums[0]);
-  renderCardHeader('card1-header');
-
-  if(cardNums.length>=2){
-    setTxt('card2-id', cardNums[1]);
-    renderCardHeader('card2-header');
-    document.getElementById('card2-box').style.display='block';
-    document.getElementById('no-card-slot').style.display='none';
-  }else{
-    document.getElementById('card2-box').style.display='none';
-    document.getElementById('no-card-slot').style.display='flex';
-  }
-
-  showScreen('screen-game');
-  renderNumGrid(); renderAllCards();
-  if(game.autoRunning) startAutoGame();
-}
-
-/* ══════════════════════════════════════════
-   GAME ENGINE
-══════════════════════════════════════════ */
-function generateCard(){
-  var card=[];
-  for(var c=0;c<5;c++){
-    var min=c*15+1,max=c*15+15,pool=[];
-    for(var i=min;i<=max;i++) pool.push(i);
-    for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
-    for(var r=0;r<5;r++) card.push({c:c,r:r,n:pool[r]});
-  }
-  card[12]={c:2,r:2,n:'★'};
-  return card;
-}
-
-function colFor(n){return Math.floor((n-1)/15);}
-function letterFor(n){return COLS[colFor(n)];}
-
-function renderNumGrid(){
-  var g=document.getElementById('num-grid');
-  var h='';
-  for(var row=1;row<=15;row++){
-    for(var ci=0;ci<5;ci++){
-      var n=ci*15+row;
-      var L=COLS[ci];
-      if(game.current===n){
-        h+='<div class="num-cell current" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+';border-color:'+COL_COLORS[L]+';box-shadow:0 0 10px '+COL_COLORS[L]+'">'+n+'</div>';
-      }else if(game.called.has(n)){
-        h+='<div class="num-cell called" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+';border-color:'+COL_COLORS[L]+'">'+n+'</div>';
-      }else{
-        h+='<div class="num-cell">'+n+'</div>';
-      }
-    }
-  }
-  g.innerHTML=h;
-}
-
-function renderCardHeader(id){
-  document.getElementById(id).innerHTML=COLS.map(function(L){return '<div class="ch '+L+'">'+L+'</div>';}).join('');
-}
-
-function renderCard(ci){
-  var gid=ci===0?'card1-grid':'card2-grid';
-  var grid=document.getElementById(gid);
-  if(!grid||!game.cards[ci]) return;
-  var wins=new Set();
-  game.wonLines[ci].forEach(function(line){line.forEach(function(i){wins.add(i);});});
-  grid.innerHTML=game.cards[ci].map(function(cell,idx){
-    var isFree=cell.n==='★';
-    var isMarked=game.marked[ci].has(idx);
-    var isWin=wins.has(idx);
-    var cls=isWin?'cc win-cell':isFree?'cc free':isMarked?'cc marked':'cc';
-    return '<div class="'+cls+'" onclick="tapCard('+ci+','+idx+')">'+cell.n+'</div>';
-  }).join('');
-}
-
-function renderAllCards(){for(var ci=0;ci<game.cards.length;ci++) renderCard(ci);}
-
-function renderRecentBalls(){
-  document.getElementById('recent-balls').innerHTML=game.recentBalls.slice(-4).map(function(n){
-    var L=letterFor(n);
-    return '<div class="rball" style="background:'+COL_COLORS[L]+';color:'+COL_TEXT[L]+'"><span class="rl">'+L+'</span><span class="rn">'+n+'</span></div>';
-  }).join('');
-}
-
-function renderCurrentBall(){
-  if(!game.current) return;
-  var n=game.current,L=letterFor(n);
-  var el=document.getElementById('current-big');
-  el.style.background=COL_COLORS[L]; el.style.color=COL_TEXT[L];
-  el.style.boxShadow='0 0 20px '+COL_COLORS[L];
-  setTxt('cb-letter', L+'-');
-  setTxt('cb-num', n);
-}
-
-var voicesLoaded = [];
-function loadVoices(){
-  voicesLoaded = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-}
-if(window.speechSynthesis){
-  window.speechSynthesis.onvoiceschanged = loadVoices;
-  loadVoices();
-}
-
-function speakNumber(n){
-  if(!soundOn) return;
-  if(!window.speechSynthesis) return;
-  var L = letterFor(n);
-  var amText = L + ' ' + (AM_NUMBERS[n]||String(n));
-  window.speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(amText);
-  var amVoice = voicesLoaded.find(function(v){return v.lang&&v.lang.startsWith('am');});
-  if(amVoice) u.voice = amVoice;
-  u.lang = 'am-ET';
-  u.rate = 0.9;
-  u.pitch = 1;
-  window.speechSynthesis.speak(u);
-}
-
-function drawBall(){
-  if(game.called.size>=75){triggerWinner();return;}
-  var pool=[];
-  for(var i=1;i<=75;i++) if(!game.called.has(i)) pool.push(i);
-  var n=pool[Math.floor(Math.random()*pool.length)];
-  game.called.add(n); game.current=n;
-  game.recentBalls.push(n);
-  if(game.recentBalls.length>8) game.recentBalls.shift();
-  game.callCount++;
-  setTxt('s-call', game.callCount);
-  // Speak immediately as soon as ball is drawn
-  speakNumber(n);
-  game.cards.forEach(function(card,ci){
-    card.forEach(function(cell,idx){if(cell.n===n) game.marked[ci].add(idx);});
-    if(checkWin(ci)) return;
-  });
-  renderNumGrid(); renderRecentBalls(); renderCurrentBall(); renderAllCards();
-}
-
-function tapCard(ci,idx){
-  if(idx===12) return;
-  if(game.marked[ci].has(idx)) game.marked[ci].delete(idx);
-  else game.marked[ci].add(idx);
-  checkWin(ci); renderCard(ci);
-}
-
-function checkWin(ci){
-  var lines=[];
-  for(var r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
-  for(var c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
-  lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
-  var prev=game.wonLines[ci].size;
-  var nw=new Set();
-  lines.forEach(function(line){if(line.every(function(i){return game.marked[ci].has(i);})) nw.add(line);});
-  game.wonLines[ci]=nw;
-  if(nw.size>prev){stopAutoGame(); triggerWinner(ci); return true;}
-  return false;
-}
-
-/* ══════════════════════════════════════════
-   WINNER
-══════════════════════════════════════════ */
-function renderWinnerCard(ci){
-  var card=game.cards[ci];
-  var marked=game.marked[ci];
-  var wins=new Set();
-  game.wonLines[ci].forEach(function(line){line.forEach(function(i){wins.add(i);});});
-  document.getElementById('w-card-hdr').innerHTML=COLS.map(function(L){return '<div class="wch '+L+'">'+L+'</div>';}).join('');
-  document.getElementById('w-card-grid').innerHTML=card.map(function(cell,idx){
-    var isFree=cell.n==='★';
-    var isWin=wins.has(idx);
-    var isMarked=marked.has(idx);
-    var cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
-    return '<div class="'+cls+'">'+cell.n+'</div>';
-  }).join('');
-  document.getElementById('w-card-box').style.display='block';
-}
-
-function triggerWinner(ci){
-  stopAutoGame();
-  var isPlayer=ci!==undefined;
-  var winnerName=isPlayer?((tgUser&&tgUser.first_name)||'You'):'—';
-  var winnerCardNum=isPlayer?game.cardNums[ci]:'—';
-  var totalPot=game.totalPlayers*10;
-  var prize=Math.round(totalPot*0.8);
-
-  setTxt('w-round', round);
-  setTxt('w-players', game.totalPlayers);
-  setTxt('w-name', winnerName);
-  setTxt('w-card', '#'+winnerCardNum);
-  setTxt('w-prize', prize+' Br');
-  setTxt('w-game-id', game.gameId||'—');
-
-  if(isPlayer&&game.betDeducted) reportWin(prize, game.gameId);
-
-  if(isPlayer){
-    renderWinnerCard(ci);
-  }else{
-    var fakeCard=generateCard();
-    var fakeMarked=new Set([12]);
-    for(var i=0;i<30;i++){
-      var rn=Math.floor(Math.random()*75)+1;
-      fakeCard.forEach(function(cell,idx){if(cell.n===rn) fakeMarked.add(idx);});
-    }
-    var fakeWins=new Set();
-    var lines=[];
-    for(var r=0;r<5;r++) lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);
-    for(var c=0;c<5;c++) lines.push([c,c+5,c+10,c+15,c+20]);
-    lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
-    lines.forEach(function(line){if(line.every(function(i){return fakeMarked.has(i);})) line.forEach(function(i){fakeWins.add(i);});});
-    document.getElementById('w-card-hdr').innerHTML=COLS.map(function(L){return '<div class="wch '+L+'">'+L+'</div>';}).join('');
-    document.getElementById('w-card-grid').innerHTML=fakeCard.map(function(cell,idx){
-      var isFree=cell.n==='★';
-      var isWin=fakeWins.has(idx);
-      var isMarked=fakeMarked.has(idx);
-      var cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';
-      return '<div class="'+cls+'">'+cell.n+'</div>';
-    }).join('');
-    document.getElementById('w-card-box').style.display='block';
-  }
-
-  showScreen('screen-winner');
-  // keep bottom nav active on home
-  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
-  document.getElementById('nav-home').classList.add('active');
-
-  var fill=document.getElementById('dist-fill');
-  var countEl=document.getElementById('next-count');
-  fill.style.transition='none'; fill.style.width='100%';
-  setTimeout(function(){fill.style.transition='width 10s linear'; fill.style.width='0%';},50);
-
-  var nc=10;
-  countEl.textContent=nc;
-  var wIv=setInterval(function(){
-    nc--; countEl.textContent=nc;
-    if(nc<=0){clearInterval(wIv); round++; newRound();}
-  },1000);
-}
-
-function newRound(){
-  stopAutoGame();
-  stopWaitDraw();
-  selCards=new Set(); game.betDeducted=false;
-  for(var i=1;i<=400;i++){
-    var el=document.getElementById('cc-'+i);
-    if(el) el.classList.remove('selected','disabled');
-  }
-  setTxt('sel-count','0');
-  setTxt('s-bet','0');
-  setTxt('s-win-sel','0');
-  timeLeft=35;
-  currentGameId=generateGameId();
-  setTxt('game-id-label', currentGameId);
-  showScreen('screen-home');
-  showSelectScreen();
-  fetchBalance();
-  startTimer();
-}
-
-/* ══════════════════════════════════════════
-   AUTO + SOUND CONTROLS
-══════════════════════════════════════════ */
-function toggleAuto(){
-  game.autoRunning=!game.autoRunning;
-  document.getElementById('auto-toggle').classList.toggle('on',game.autoRunning);
-  if(game.autoRunning) startAutoGame(); else stopAutoGame();
-}
-
-function toggleSound(){
-  soundOn=!soundOn;
-  document.getElementById('sound-toggle').classList.toggle('blue-on',soundOn);
-}
-
-function toggleSoundWait(){
-  soundOn=!soundOn;
-  var wt=document.getElementById('wait-sound-toggle');
-  if(wt) wt.classList.toggle('blue-on',soundOn);
-}
-
-function startAutoGame(){
-  stopAutoGame();
-  game.autoIv=setInterval(function(){
-    if(!game.autoRunning||game.called.size>=75){stopAutoGame();return;}
-    drawBall();
-  },2000);
-}
-function stopAutoGame(){clearInterval(game.autoIv); game.autoIv=null;}
-
-/* ══════════════════════════════════════════
-   SCREEN HELPER
-══════════════════════════════════════════ */
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
-  document.getElementById(id).classList.add('active');
-}
-
-/* ══════════════════════════════════════════
-   INIT
-══════════════════════════════════════════ */
-buildGrid();
-initTelegram();
-fetchBalance().then(function(){
-  updateUserInfo();
-  checkGameState();
-});
-</script>
-</body>
-</html>
