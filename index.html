@@ -525,9 +525,25 @@ function initTelegram(){
       if(wa.initDataUnsafe&&wa.initDataUnsafe.user){
         tgUser=wa.initDataUnsafe.user;
         tgUserId=tgUser.id;
+        // ✅ FIX: Send name to server so leaderboard shows names
+        updateUserName(tgUser.first_name||'');
       }
     }
   }catch(e){}
+}
+
+// ✅ FIX: New function to send user name to server
+async function updateUserName(firstName){
+  if(!tgUserId||!firstName||!apiAvailable) return;
+  try{
+    await fetch(API_BASE+'/api/update_name',{
+      method:'POST',headers:apiHeadersPost,
+      body:JSON.stringify({user_id:tgUserId, first_name:firstName})
+    });
+    console.log('✅ Name updated:', firstName);
+  }catch(e){
+    console.log('❌ updateName error:', e.message);
+  }
 }
 
 /* ══════════════════════════════════════════
