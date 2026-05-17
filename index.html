@@ -1051,6 +1051,18 @@ function toggleCard(n){
   setTxt('s-win-game', winAmt);
 }
 
+function startTimer(){
+  clearInterval(timerIv);
+  var el=document.getElementById('s-time');
+  el.textContent=timeLeft+'s'; el.style.color='var(--yellow)';
+  timerIv=setInterval(function(){
+    timeLeft--;
+    el.textContent=timeLeft+'s';
+    el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
+    if(timeLeft<=0){clearInterval(timerIv); startGame();}
+  },1000);
+}
+
 /* ══════════════════════════════════════════
    START GAME
 ══════════════════════════════════════════ */
