@@ -270,7 +270,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
             </div>
             <div class="ctrl-item">
               <span class="ctrl-lbl blue">🔊</span>
-              <div class="toggle blue-on" id="wait-sound-toggle" onclick="toggleSoundWait()"></div>
+              <div class="toggle" id="wait-sound-toggle" onclick="toggleSoundWait()"></div>
             </div>
           </div>
           <!-- Wait message in card area -->
@@ -315,7 +315,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
           </div>
           <div class="ctrl-item">
             <span class="ctrl-lbl blue">🔊</span>
-            <div class="toggle blue-on" id="sound-toggle" onclick="toggleSound()"></div>
+            <div class="toggle" id="sound-toggle" onclick="toggleSound()"></div>
           </div>
         </div>
         <div class="card-box" id="card1-box">
@@ -565,7 +565,7 @@ var timeLeft = 35;
 var timerIv = null;
 var round = 1;
 var currentGameId = null;
-var soundOn = true;
+var soundOn = false;
 var currentPeriod = 'week';
 var currentCategory = 'deposit';
 
@@ -744,7 +744,7 @@ function updateBalanceDisplay(){
   setTxt('wl-bal', '💰 '+totalStr+' Br');
 
   var noBalMsg = document.getElementById('no-balance-msg');
-  if(userPlayBalance<10&&apiAvailable) noBalMsg.style.display='block';
+  if(apiAvailable&&(userPlayBalance+userMainBalance)<10) noBalMsg.style.display='block';
   else noBalMsg.style.display='none';
 }
 
@@ -1081,9 +1081,24 @@ function startTimer(){
 async function startGame(){
   clearInterval(timerIv);
   var cardNums=Array.from(selCards);
-  if(cardNums.length===0){
-    // Auto start with no cards = just go to wait
-    showWaitScreen();
+
+  // ✅ FIX 1: Minimum 2 cards (players) required — if not enough, silently restart countdown
+  if(cardNums.length < 2){
+    // Refund any selected card visually and reset
+    selCards.forEach(function(n){
+      document.getElementById('cc-'+n).classList.remove('selected');
+      userPlayBalance += 10;
+    });
+    selCards=new Set();
+    document.getElementById('sel-count').textContent='0';
+    setTxt('s-win-sel','0');
+    setTxt('s-win-game','0');
+    setTxt('s-players','0');
+    updateBalanceDisplay();
+    timeLeft=35;
+    currentGameId=generateGameId();
+    setTxt('game-id-label', currentGameId);
+    startTimer();
     return;
   }
 
@@ -1215,15 +1230,20 @@ function speakNumber(n){
   if(!soundOn) return;
   if(!window.speechSynthesis) return;
   var L = letterFor(n);
-  var amText = L + ' ' + (AM_NUMBERS[n]||String(n));
+  var amWord = AM_NUMBERS[n]||String(n);
   window.speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(amText);
+  var u1 = new SpeechSynthesisUtterance(L);
+  u1.lang = 'en-US';
+  u1.rate = 0.85;
+  u1.pitch = 1;
+  var u2 = new SpeechSynthesisUtterance(amWord);
   var amVoice = voicesLoaded.find(function(v){return v.lang&&v.lang.startsWith('am');});
-  if(amVoice) u.voice = amVoice;
-  u.lang = 'am-ET';
-  u.rate = 0.9;
-  u.pitch = 1;
-  window.speechSynthesis.speak(u);
+  if(amVoice) u2.voice = amVoice;
+  u2.lang = 'am-ET';
+  u2.rate = 0.85;
+  u2.pitch = 1;
+  window.speechSynthesis.speak(u1);
+  window.speechSynthesis.speak(u2);
 }
 
 function drawBall(){
