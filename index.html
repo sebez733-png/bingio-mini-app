@@ -1005,39 +1005,50 @@ function toggleCard(n){
   if(selCards.has(n)){
     selCards.delete(n);
     document.getElementById('cc-'+n).classList.remove('selected');
+    
+    // ✅ IMMEDIATE REFUND: Add 10 back to Play Wallet visually
+    userPlayBalance += 10;
+    updateBalanceDisplay();
+    
   }else{
     if(selCards.size>=2) return;
-    // Check balance: play first, then main
+    
+    // Check if they have enough total balance for this card
     var totalAvail = userPlayBalance + userMainBalance;
-    if(apiAvailable && selCards.size===1 && totalAvail<20){
+    if(apiAvailable && totalAvail < 10){
+      alert('⚠️ Insufficient balance! በቂ ሂሳብ የለም!'); return;
+    }
+    if(apiAvailable && selCards.size===1 && totalAvail < 20){
       alert('⚠️ Insufficient balance for 2 cards!'); return;
     }
+    
     selCards.add(n);
     document.getElementById('cc-'+n).classList.add('selected');
+    
+    // ✅ IMMEDIATE DEDUCTION: Mirrors the backend's "deduct_bet_smart" logic visually
+    if(userPlayBalance >= 10){
+      userPlayBalance -= 10;
+    } else {
+      var remaining = 10 - userPlayBalance;
+      userPlayBalance = 0;
+      userMainBalance -= remaining;
+    }
+    updateBalanceDisplay();
   }
+  
+  // Handle visual disabling of unselected cards if 2 are selected
   if(selCards.size>=2){
     for(var i=1;i<=400;i++) if(!selCards.has(i)) document.getElementById('cc-'+i).classList.add('disabled');
   }else{
     for(var i=1;i<=400;i++) document.getElementById('cc-'+i).classList.remove('disabled');
     selCards.forEach(function(s){document.getElementById('cc-'+s).classList.add('selected');});
   }
+  
   document.getElementById('sel-count').textContent=selCards.size;
   // BET is always 10 (fixed) - only WIN updates based on cards selected
   var winAmt = Math.round(selCards.size*10*0.8);
   setTxt('s-win-sel', winAmt);
   setTxt('s-win-game', winAmt);
-}
-
-function startTimer(){
-  clearInterval(timerIv);
-  var el=document.getElementById('s-time');
-  el.textContent=timeLeft+'s'; el.style.color='var(--yellow)';
-  timerIv=setInterval(function(){
-    timeLeft--;
-    el.textContent=timeLeft+'s';
-    el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
-    if(timeLeft<=0){clearInterval(timerIv); startGame();}
-  },1000);
 }
 
 /* ══════════════════════════════════════════
