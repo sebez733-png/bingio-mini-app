@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>Bingo Mini App</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -52,14 +53,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .game-id-bar span{color:var(--yellow);font-weight:700;}
 .cards-scroll{flex:1;overflow-y:auto;padding:5px;}
 .cards-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
-.card-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1px solid rgba(255,107,53,0.4);transition:all .15s;user-select:none;animation:cardglow 2.5s ease-in-out infinite;}
-@keyframes cardglow{0%,100%{box-shadow:0 0 3px rgba(255,107,53,0.2);}50%{box-shadow:0 0 8px rgba(255,107,53,0.55),0 0 2px rgba(255,107,53,0.3) inset;}}
+.card-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1px solid rgba(255,107,53,0.4);transition:all .15s;user-select:none;}
 .card-cell:active{transform:scale(0.93);}
-.card-cell.selected{background:var(--orange);color:#000;border-color:var(--orange);box-shadow:0 0 12px rgba(255,107,53,0.8);transform:scale(1.05);animation:none;}
-.card-cell.disabled{opacity:0.3;cursor:not-allowed;animation:none;}
-/* not enough players banner */
-.not-enough-msg{background:rgba(255,107,53,0.15);border:1px solid var(--orange);border-radius:8px;margin:6px 8px;padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--orange);display:none;}
-.not-enough-msg.show{display:block;}
+.card-cell.selected{background:var(--orange);color:#000;border-color:var(--orange);box-shadow:0 0 8px rgba(255,107,53,0.6);transform:scale(1.05);}
+.card-cell.disabled{opacity:0.3;cursor:not-allowed;}
 .bottom-bar{background:var(--bg2);padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
 .selected-info{flex:1;font-size:12px;color:var(--muted);}
 .selected-info strong{color:var(--text);font-size:14px;}
@@ -225,7 +222,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
     <!-- Card selection (shown when no game running) -->
     <div id="select-area">
       <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient PLAY balance! በቂ ሂሳብ የለም!</div>
-      <div class="not-enough-msg" id="not-enough-msg">⚠️ Minimum 2 players required! Restarting...<br>ቢያንስ 2 ተጫዋቾች ያስፈልጋሉ! እንደገና እንጀምራለን...</div>
       <div class="game-id-bar">Game ID: <span id="game-id-label">—</span></div>
       <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
       <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
@@ -411,7 +407,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
         <div><div class="mr-label" id="my-rank-val-label">Value</div><div class="mr-val" id="my-rank-val">—</div></div>
       </div>
       <div class="rank-card">
-        <div class="rank-head"><span>#</span><span>NAME</span><span style="text-align:right;">AMOUNT</span></div>
+        <div class="rank-head"><span>#</span><span>NAME</span><span style="text-align:right;">TIMES</span></div>
         <div id="rank-rows"><div class="empty-row">Loading...</div></div>
       </div>
     </div>
@@ -474,6 +470,59 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
    CONFIG
 ══════════════════════════════════════════ */
 var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+  var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+
+// ✅ NEW: SocketIO connection for real-time sync
+var socket = null;
+
+function initSocket(){
+  try{
+    socket = io(API_BASE, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10
+    });
+
+    socket.on('connect', function(){
+      console.log('🔌 Socket connected!');
+      socket.emit('join_room', {room: 'bingo_main'});
+    });
+
+    socket.on('disconnect', function(){
+      console.log('🔌 Socket disconnected');
+    });
+
+    socket.on('game_state_update', function(data){
+      console.log('🎮 Game state update:', data);
+      if(data.game_running){
+        showWaitScreen();
+      }
+      if(data.total_players){
+        setTxt('s-players', data.total_players);
+        setTxt('w-players-top', data.total_players);
+      }
+    });
+
+    socket.on('countdown_update', function(data){
+      console.log('⏳ Countdown:', data);
+      currentGameId = data.game_id;
+      setTxt('game-id-label', data.game_id);
+      timeLeft = data.time_left;
+      showSelectScreen();
+      startTimer();
+    });
+
+    socket.on('player_joined', function(data){
+      console.log('👤 Player joined:', data);
+      setTxt('s-players', data.total_players);
+      setTxt('w-players-top', data.total_players);
+    });
+
+  }catch(e){
+    console.log('❌ Socket init error:', e.message);
+  }
+}
 var COLS = ['B','I','N','G','O'];
 var COL_COLORS = {B:'#4a9eff',I:'#9b59b6',N:'#e91e8c',G:'#ffd700',O:'#ff6b35'};
 var COL_TEXT = {B:'#fff',I:'#fff',N:'#fff',G:'#000',O:'#000'};
@@ -531,9 +580,25 @@ function initTelegram(){
       if(wa.initDataUnsafe&&wa.initDataUnsafe.user){
         tgUser=wa.initDataUnsafe.user;
         tgUserId=tgUser.id;
+        // ✅ FIX: Send name to server so leaderboard shows names
+        updateUserName(tgUser.first_name||'');
       }
     }
   }catch(e){}
+}
+
+// ✅ FIX: New function to send user name to server
+async function updateUserName(firstName){
+  if(!tgUserId||!firstName||!apiAvailable) return;
+  try{
+    await fetch(API_BASE+'/api/update_name',{
+      method:'POST',headers:apiHeadersPost,
+      body:JSON.stringify({user_id:tgUserId, first_name:firstName})
+    });
+    console.log('✅ Name updated:', firstName);
+  }catch(e){
+    console.log('❌ updateName error:', e.message);
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -628,18 +693,12 @@ async function deductBet(amount){
   }catch(e){ return true; }
 }
 
-async function reportWin(amount, gameId, cardNum){
+async function reportWin(amount, gameId){
   if(!tgUserId||!apiAvailable) return;
   try{
     var res = await fetch(API_BASE+'/api/win',{
       method:'POST',headers:apiHeaders,
-      body:JSON.stringify({
-        user_id:tgUserId,
-        amount:amount,
-        game_id:gameId,
-        winner_name:(tgUser&&tgUser.first_name)||'Player',
-        winner_card:cardNum||'—'
-      })
+      body:JSON.stringify({user_id:tgUserId,amount:amount,game_id:gameId})
     });
     var data = await res.json();
     if(data.success){
@@ -788,7 +847,7 @@ async function loadLeaderboard(){
     setTxt('my-rank','#—'); setTxt('my-rank-val','—');
   }
 
-  var labels = {deposit:'Total Deposit',invite:'Invitations',games:'Games Played'};
+  var labels = {deposit:'Times Deposited',invite:'Invitations',games:'Games Played'};
   setTxt('my-rank-val-label', labels[currentCategory]||'Value');
 }
 
@@ -972,12 +1031,9 @@ function toggleCard(n){
 function startTimer(){
   clearInterval(timerIv);
   var el=document.getElementById('s-time');
-  if(!el) return;
-  el.textContent=timeLeft+'s';
-  el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
+  el.textContent=timeLeft+'s'; el.style.color='var(--yellow)';
   timerIv=setInterval(function(){
     timeLeft--;
-    if(timeLeft<0) timeLeft=0;
     el.textContent=timeLeft+'s';
     el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
     if(timeLeft<=0){clearInterval(timerIv); startGame();}
@@ -1012,11 +1068,8 @@ async function startGame(){
   game.totalPlayers=0; // will be updated from API
   game.betDeducted=true;
 
-  // Record game played + notify server about player
+  // Record game played
   recordGamePlayed(game.gameId, cardNums);
-
-  // Also notify server via bet endpoint that this player joined
-  // (bet already deducted above, server will emit player_joined)
 
   setTxt('s-players', game.totalPlayers);
   setTxt('game-id-game', game.gameId||'—');
@@ -1035,11 +1088,7 @@ async function startGame(){
 
   showScreen('screen-game');
   renderNumGrid(); renderAllCards();
-  // NOTE: Numbers are driven by server via 'number_called' socket event
-  // Local autoGame only runs if socket not connected (fallback)
-  if(!socket || !socket.connected){
-    if(game.autoRunning) startAutoGame();
-  }
+  if(game.autoRunning) startAutoGame();
 }
 
 /* ══════════════════════════════════════════
@@ -1214,7 +1263,7 @@ function triggerWinner(ci){
   setTxt('w-prize', prize+' Br');
   setTxt('w-game-id', game.gameId||'—');
 
-  if(isPlayer&&game.betDeducted) reportWin(prize, game.gameId, winnerCardNum);
+  if(isPlayer&&game.betDeducted) reportWin(prize, game.gameId);
 
   if(isPlayer){
     renderWinnerCard(ci);
@@ -1269,6 +1318,7 @@ function newRound(){
     if(el) el.classList.remove('selected','disabled');
   }
   setTxt('sel-count','0');
+  setTxt('s-bet','0');
   setTxt('s-win-sel','0');
   timeLeft=35;
   currentGameId=generateGameId();
@@ -1276,7 +1326,6 @@ function newRound(){
   showScreen('screen-home');
   showSelectScreen();
   fetchBalance();
-  // Always start local timer — socket countdown_update will sync it if connected
   startTimer();
 }
 
@@ -1318,242 +1367,14 @@ function showScreen(id){
 }
 
 /* ══════════════════════════════════════════
-   SOCKETIO — REAL-TIME SYNC
-══════════════════════════════════════════ */
-var socket = null;
-
-function initSocket(){
-  try{
-    socket = io(API_BASE, {
-      transports: ['websocket','polling'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 20
-    });
-
-    socket.on('connect', function(){
-      console.log('🔌 Socket connected');
-      socket.emit('join_room', {room: 'bingo_main'});
-    });
-
-    socket.on('disconnect', function(){
-      console.log('🔌 Socket disconnected');
-    });
-
-    /* ── room_created: new round created, start countdown ── */
-    socket.on('room_created', function(data){
-      currentGameId = data.game_id;
-      timeLeft = data.time_left || 35;
-      setTxt('game-id-label', currentGameId);
-      clearInterval(timerIv);
-      showSelectScreen();
-      startTimer();
-    });
-
-    /* ── countdown_update: sync timer every second ── */
-    socket.on('countdown_update', function(data){
-      // Sync server time — override local countdown
-      timeLeft = data.time_left;
-      var el = document.getElementById('s-time');
-      if(el){
-        el.textContent = timeLeft + 's';
-        el.style.color = timeLeft <= 10 ? 'var(--orange)' : 'var(--yellow)';
-      }
-      // Update real player count
-      var realPlayers = data.total_players || 0;
-      setTxt('s-players', realPlayers);
-      setTxt('w-players-top', realPlayers);
-    });
-
-    /* ── player_joined: update player count live ── */
-    socket.on('player_joined', function(data){
-      var realPlayers = data.total_players || 0;
-      setTxt('s-players', realPlayers);
-      setTxt('w-players-top', realPlayers);
-      setTxt('w-players', realPlayers);
-    });
-
-    /* ── not_enough_players: min 2 not met, restart ── */
-    socket.on('not_enough_players', function(data){
-      var msg = document.getElementById('not-enough-msg');
-      if(msg) msg.classList.add('show');
-      setTimeout(function(){
-        if(msg) msg.classList.remove('show');
-      }, 3000);
-      // Reset local selection
-      selCards = new Set();
-      game.betDeducted = false;
-      for(var i=1;i<=400;i++){
-        var el=document.getElementById('cc-'+i);
-        if(el) el.classList.remove('selected','disabled');
-      }
-      setTxt('sel-count','0');
-      setTxt('s-win-sel','0');
-    });
-
-    /* ── game_started: switch ALL players to game screen ── */
-    socket.on('game_started', function(data){
-      // Only switch to game screen if player has selected cards and paid
-      if(!game.betDeducted){
-        // Observer — show wait screen
-        showWaitScreen();
-        return;
-      }
-      var realPlayers = data.total_players || 0;
-      game.totalPlayers = realPlayers;
-      setTxt('s-players', realPlayers);
-      setTxt('w-players', realPlayers);
-      game.gameId = currentGameId;
-      setTxt('game-id-game', currentGameId || '—');
-      showScreen('screen-game');
-      renderNumGrid(); renderAllCards();
-      if(game.autoRunning) startAutoGame();
-    });
-
-    /* ── number_called: server calls each number ── */
-    socket.on('number_called', function(data){
-      var n = data.number;
-      var called = data.called || [];
-
-      // Sync the called set from server
-      game.called = new Set(called);
-      game.current = n;
-      game.callCount = data.call_count || called.length;
-      setTxt('s-call', game.callCount);
-      setTxt('w-call-top', game.callCount);
-
-      // Also sync wait game
-      waitGame.called = new Set(called);
-      waitGame.current = n;
-      waitGame.callCount = game.callCount;
-
-      speakNumber(n);
-
-      // Auto-mark cards
-      game.cards.forEach(function(card, ci){
-        card.forEach(function(cell, idx){
-          if(cell.n === n) game.marked[ci].add(idx);
-        });
-        checkWin(ci);
-      });
-
-      // Update both game grid and wait grid
-      if(document.getElementById('screen-game').classList.contains('active')){
-        renderNumGrid(); renderRecentBalls(); renderCurrentBall(); renderAllCards();
-      }
-      if(document.getElementById('wait-area').style.display !== 'none'){
-        // sync wait grid
-        waitGame.recentBalls.push(n);
-        if(waitGame.recentBalls.length > 4) waitGame.recentBalls.shift();
-        renderWaitGrid(); renderWaitBalls(); renderWaitCurrent();
-        setTxt('w-call-top', game.callCount);
-      }
-    });
-
-    /* ── winner_found: server announces winner to all ── */
-    socket.on('winner_found', function(data){
-      stopAutoGame(); stopWaitDraw();
-      var prize = data.prize || 0;
-      var winnerName = data.winner_name || '—';
-      var winnerCard = data.winner_card || '—';
-      var totalP = data.total_players || game.totalPlayers;
-
-      setTxt('w-round', round);
-      setTxt('w-players', totalP);
-      setTxt('w-name', winnerName);
-      setTxt('w-card', '#' + winnerCard);
-      setTxt('w-prize', prize + ' Br');
-      setTxt('w-game-id', data.game_id || currentGameId || '—');
-
-      // Show winner card only if this player won
-      if(winnerName === ((tgUser && tgUser.first_name) || 'You') && game.wonLines && game.wonLines.length > 0){
-        var wonCard = game.wonLines.findIndex(function(wl){ return wl.size > 0; });
-        if(wonCard >= 0) renderWinnerCard(wonCard);
-      } else {
-        // Hide winner card box for non-winners
-        var wb = document.getElementById('w-card-box');
-        if(wb) wb.style.display = 'none';
-      }
-
-      showScreen('screen-winner');
-      document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
-      document.getElementById('nav-home').classList.add('active');
-
-      var fill = document.getElementById('dist-fill');
-      var countEl = document.getElementById('next-count');
-      fill.style.transition = 'none'; fill.style.width = '100%';
-      setTimeout(function(){ fill.style.transition = 'width 10s linear'; fill.style.width = '0%'; }, 50);
-
-      var nc = 10;
-      countEl.textContent = nc;
-      var wIv = setInterval(function(){
-        nc--; countEl.textContent = nc;
-        if(nc <= 0){ clearInterval(wIv); round++; newRound(); }
-      }, 1000);
-    });
-
-    /* ── balance_updated: refresh balance if it's this user ── */
-    socket.on('balance_updated', function(data){
-      if(tgUserId && data.user_id === tgUserId){
-        userMainBalance = data.main_balance;
-        userPlayBalance = data.play_balance;
-        updateBalanceDisplay();
-      }
-    });
-
-    /* ── round_finished / end_game: go back to select ── */
-    socket.on('round_finished', function(data){
-      console.log('🔄 Round finished:', data.game_id);
-    });
-
-    socket.on('end_game', function(data){
-      round++;
-      newRound();
-    });
-
-    /* ── game_state_update: initial state on connect ── */
-    socket.on('game_state_update', function(data){
-      var realPlayers = data.total_players || 0;
-      setTxt('s-players', realPlayers);
-      setTxt('w-players-top', realPlayers);
-      if(data.game_running){
-        // Game already running — sync called numbers and show wait screen
-        if(data.called_numbers && data.called_numbers.length > 0){
-          waitGame.called = new Set(data.called_numbers);
-          waitGame.current = data.current_number;
-        }
-        clearInterval(timerIv);
-        showWaitScreen();
-      } else {
-        // Not running — sync timer from server and restart countdown
-        clearInterval(timerIv);
-        timeLeft = data.time_left || 35;
-        if(data.game_id) currentGameId = data.game_id;
-        setTxt('game-id-label', currentGameId || '—');
-        showSelectScreen();
-        startTimer();
-      }
-    });
-
-  } catch(e){
-    console.log('❌ Socket error:', e.message);
-  }
-}
-
-/* ══════════════════════════════════════════
    INIT
 ══════════════════════════════════════════ */
 buildGrid();
 initTelegram();
-// Start local timer immediately so countdown always works
-currentGameId = generateGameId();
-setTxt('game-id-label', currentGameId);
-showSelectScreen();
-startTimer();
-
+initSocket();
 fetchBalance().then(function(){
   updateUserInfo();
-  initSocket(); // Socket will override local timer with server sync
+  checkGameState();
 });
 </script>
 </body>
