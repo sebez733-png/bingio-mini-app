@@ -51,7 +51,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .select-info span{color:var(--orange);font-weight:700;}
 .game-id-bar{background:var(--bg3);text-align:center;padding:3px;font-size:9px;color:var(--muted);}
 .game-id-bar span{color:var(--yellow);font-weight:700;}
-.cards-scroll{flex:1;overflow-y:auto;padding:5px;}
+.cards-scroll{flex:1;overflow-y:auto;padding:5px;background:radial-gradient(ellipse at 50% 30%, rgba(74,158,255,0.07) 0%, rgba(155,89,182,0.05) 50%, transparent 80%);}
 .cards-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
 .card-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1px solid rgba(255,107,53,0.4);transition:all .15s;user-select:none;}
 .card-cell:active{transform:scale(0.93);}
@@ -1008,18 +1008,24 @@ function buildGrid(){
   g.innerHTML=h;
 }
 
+// Track how each card's 10Br was split: {cardNum: {fromPlay, fromMain}}
+var cardDeductMap = {};
+
 function toggleCard(n){
   if(selCards.has(n)){
     selCards.delete(n);
     document.getElementById('cc-'+n).classList.remove('selected');
-    
-    // ✅ IMMEDIATE REFUND: Add 10 back to Play Wallet visually
-    userPlayBalance += 10;
+
+    // ✅ REFUND: return exactly to the wallet it came from
+    var d = cardDeductMap[n] || {fromPlay:10, fromMain:0};
+    userPlayBalance += d.fromPlay;
+    userMainBalance += d.fromMain;
+    delete cardDeductMap[n];
     updateBalanceDisplay();
-    
+
   }else{
     if(selCards.size>=2) return;
-    
+
     // Check if they have enough total balance for this card
     var totalAvail = userPlayBalance + userMainBalance;
     if(apiAvailable && totalAvail < 10){
@@ -1028,18 +1034,22 @@ function toggleCard(n){
     if(apiAvailable && selCards.size===1 && totalAvail < 20){
       alert('⚠️ Insufficient balance for 2 cards!'); return;
     }
-    
+
     selCards.add(n);
     document.getElementById('cc-'+n).classList.add('selected');
-    
-    // ✅ IMMEDIATE DEDUCTION: Mirrors the backend's "deduct_bet_smart" logic visually
+
+    // ✅ DEDUCTION: Play first, then Main for remainder — track exact split
+    var fromPlay = 0, fromMain = 0;
     if(userPlayBalance >= 10){
+      fromPlay = 10;
       userPlayBalance -= 10;
     } else {
-      var remaining = 10 - userPlayBalance;
+      fromPlay = userPlayBalance;
+      fromMain = 10 - userPlayBalance;
       userPlayBalance = 0;
-      userMainBalance -= remaining;
+      userMainBalance -= fromMain;
     }
+    cardDeductMap[n] = {fromPlay: fromPlay, fromMain: fromMain};
     updateBalanceDisplay();
   }
   
@@ -1371,7 +1381,7 @@ function triggerWinner(ci){
 function newRound(){
   stopAutoGame();
   stopWaitDraw();
-  selCards=new Set(); game.betDeducted=false;
+  selCards=new Set(); game.betDeducted=false; cardDeductMap={};
   for(var i=1;i<=400;i++){
     var el=document.getElementById('cc-'+i);
     if(el) el.classList.remove('selected','disabled');
