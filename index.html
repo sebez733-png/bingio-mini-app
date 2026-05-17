@@ -972,9 +972,12 @@ function toggleCard(n){
 function startTimer(){
   clearInterval(timerIv);
   var el=document.getElementById('s-time');
-  el.textContent=timeLeft+'s'; el.style.color='var(--yellow)';
+  if(!el) return;
+  el.textContent=timeLeft+'s';
+  el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
   timerIv=setInterval(function(){
     timeLeft--;
+    if(timeLeft<0) timeLeft=0;
     el.textContent=timeLeft+'s';
     el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
     if(timeLeft<=0){clearInterval(timerIv); startGame();}
@@ -1268,16 +1271,13 @@ function newRound(){
   setTxt('sel-count','0');
   setTxt('s-win-sel','0');
   timeLeft=35;
+  currentGameId=generateGameId();
+  setTxt('game-id-label', currentGameId);
   showScreen('screen-home');
   showSelectScreen();
   fetchBalance();
-  // Timer and game_id will be reset by server via 'room_created' socket event
-  // Fallback: if socket not connected, start local timer
-  if(!socket || !socket.connected){
-    currentGameId=generateGameId();
-    setTxt('game-id-label', currentGameId);
-    startTimer();
-  }
+  // Always start local timer — socket countdown_update will sync it if connected
+  startTimer();
 }
 
 /* ══════════════════════════════════════════
@@ -1517,15 +1517,18 @@ function initSocket(){
       setTxt('s-players', realPlayers);
       setTxt('w-players-top', realPlayers);
       if(data.game_running){
-        // Sync called numbers to wait grid
+        // Game already running — sync called numbers and show wait screen
         if(data.called_numbers && data.called_numbers.length > 0){
           waitGame.called = new Set(data.called_numbers);
           waitGame.current = data.current_number;
         }
+        clearInterval(timerIv);
         showWaitScreen();
       } else {
+        // Not running — sync timer from server and restart countdown
+        clearInterval(timerIv);
         timeLeft = data.time_left || 35;
-        currentGameId = data.game_id || currentGameId;
+        if(data.game_id) currentGameId = data.game_id;
         setTxt('game-id-label', currentGameId || '—');
         showSelectScreen();
         startTimer();
@@ -1542,9 +1545,15 @@ function initSocket(){
 ══════════════════════════════════════════ */
 buildGrid();
 initTelegram();
+// Start local timer immediately so countdown always works
+currentGameId = generateGameId();
+setTxt('game-id-label', currentGameId);
+showSelectScreen();
+startTimer();
+
 fetchBalance().then(function(){
   updateUserInfo();
-  initSocket(); // Socket handles game state sync
+  initSocket(); // Socket will override local timer with server sync
 });
 </script>
 </body>
