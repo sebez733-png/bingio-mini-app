@@ -117,8 +117,15 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .ch.G{background:#ffd700;color:#000;}
 .ch.O{background:#ff6b35;color:#000;}
 .card-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;}
+
+/* ── FIX 3: Card cell glow animation ── */
+@keyframes cardGlow{
+  0%{box-shadow:0 0 4px rgba(0,200,117,0.4);}
+  50%{box-shadow:0 0 12px rgba(0,200,117,0.9),0 0 20px rgba(0,200,117,0.4);}
+  100%{box-shadow:0 0 4px rgba(0,200,117,0.4);}
+}
 .cc{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,0.08);transition:all .2s;}
-.cc.marked{background:var(--green);color:#000;}
+.cc.marked{background:var(--green);color:#000;animation:cardGlow 1.2s ease-in-out;}
 .cc.free{background:var(--purple);color:#fff;}
 .cc.win-cell{background:var(--yellow);color:#000;box-shadow:0 0 4px var(--yellow);}
 .no-card{background:var(--bg2);border-radius:8px;padding:8px;display:flex;align-items:center;justify-content:center;opacity:.4;min-height:30px;}
@@ -1049,6 +1056,11 @@ function toggleCard(n){
   var winAmt = Math.round(selCards.size*10*0.8);
   setTxt('s-win-sel', winAmt);
   setTxt('s-win-game', winAmt);
+
+  // ✅ FIX 1 & 2: Player count = number of cards selected, update both topbars
+  var playerCount = selCards.size;
+  setTxt('s-players', playerCount);
+  setTxt('w-players-top', playerCount);
 }
 
 function startTimer(){
@@ -1088,13 +1100,14 @@ async function startGame(){
   game.wonLines=game.cards.map(function(){return new Set();});
   game.called=new Set(); game.current=null; game.recentBalls=[]; game.callCount=0;
   game.winAmount=Math.round(betAmount*0.8);
-  game.totalPlayers=0; // will be updated from API
+  game.totalPlayers=cardNums.length; // ✅ FIX 1: set totalPlayers = cards selected
   game.betDeducted=true;
 
   // Record game played
   recordGamePlayed(game.gameId, cardNums);
 
-  setTxt('s-players', game.totalPlayers);
+  setTxt('s-players', game.totalPlayers);        // ✅ FIX 2: game topbar PLAYERS
+  setTxt('w-players-top', game.totalPlayers);    // ✅ FIX 2: wait topbar PLAYERS
   setTxt('game-id-game', game.gameId||'—');
   setTxt('card1-id', cardNums[0]);
   renderCardHeader('card1-header');
@@ -1276,11 +1289,14 @@ function triggerWinner(ci){
   var isPlayer=ci!==undefined;
   var winnerName=isPlayer?((tgUser&&tgUser.first_name)||'You'):'—';
   var winnerCardNum=isPlayer?game.cardNums[ci]:'—';
-  var totalPot=game.totalPlayers*10;
-  var prize=Math.round(totalPot*0.8);
+
+  // ✅ FIX 4: Prize calculated from real player count (cards selected) × 10 × 80%
+  var realPlayers = game.totalPlayers || game.cardNums.length || 1;
+  var totalPot = realPlayers * 10;
+  var prize = Math.round(totalPot * 0.8);
 
   setTxt('w-round', round);
-  setTxt('w-players', game.totalPlayers);
+  setTxt('w-players', realPlayers);
   setTxt('w-name', winnerName);
   setTxt('w-card', '#'+winnerCardNum);
   setTxt('w-prize', prize+' Br');
