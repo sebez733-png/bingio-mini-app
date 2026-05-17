@@ -1094,10 +1094,13 @@ async function startGame(){
 
   // ✅ FIX 1: Minimum 2 cards (players) required — if not enough, silently restart countdown
   if(cardNums.length < 2){
-    // Refund any selected card visually and reset
+    // Refund any selected card back to the exact wallet it came from
     selCards.forEach(function(n){
       document.getElementById('cc-'+n).classList.remove('selected');
-      userPlayBalance += 10;
+      var d = cardDeductMap[n] || {fromPlay:10, fromMain:0};
+      userPlayBalance += d.fromPlay;
+      userMainBalance += d.fromMain;
+      delete cardDeductMap[n];
     });
     selCards=new Set();
     document.getElementById('sel-count').textContent='0';
