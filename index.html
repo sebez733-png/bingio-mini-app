@@ -502,12 +502,10 @@ function initSocket(){
 
     socket.on('game_state_update', function(data){
       console.log('🎮 Game state update:', data);
-      if(data.game_running){
-        showWaitScreen();
-      }
       if(data.total_players){
         setTxt('s-players', data.total_players);
         setTxt('w-players-top', data.total_players);
+        game.totalPlayers = data.total_players;
       }
     });
 
@@ -524,6 +522,89 @@ function initSocket(){
       console.log('👤 Player joined:', data);
       setTxt('s-players', data.total_players);
       setTxt('w-players-top', data.total_players);
+      game.totalPlayers = data.total_players;
+    });
+
+    // ✅ FIX: Server broadcasts every ball — ALL users get the same number
+    socket.on('ball_called', function(data){
+      console.log('🎱 Ball from server:', data.number);
+      var n = data.number;
+      if(!n) return;
+
+      // Update shared called set and current
+      game.called.add(n); game.current=n;
+      game.recentBalls.push(n);
+      if(game.recentBalls.length>8) game.recentBalls.shift();
+      game.callCount++;
+      setTxt('s-call', game.callCount);
+      speakNumber(n);
+
+      // Also update wait screen if user is watching
+      waitGame.called.add(n); waitGame.current=n;
+      waitGame.recentBalls.push(n);
+      if(waitGame.recentBalls.length>4) waitGame.recentBalls.shift();
+      waitGame.callCount++;
+      setTxt('w-call-top', waitGame.callCount);
+      renderWaitGrid(); renderWaitBalls(); renderWaitCurrent();
+
+      // Mark cards and check win
+      if(game.cards.length>0){
+        game.cards.forEach(function(card,ci){
+          card.forEach(function(cell,idx){if(cell.n===n) game.marked[ci].add(idx);});
+          checkWin(ci);
+        });
+        renderNumGrid(); renderRecentBalls(); renderCurrentBall(); renderAllCards();
+      }
+    });
+
+    // ✅ FIX: Server says game started — switch all users from select to game screen
+    socket.on('game_started', function(data){
+      console.log('🚀 Game started by server:', data);
+      currentGameId = data.game_id;
+      if(data.total_players) game.totalPlayers = data.total_players;
+      // Stop local auto draw (server drives balls now)
+      stopAutoGame(); stopWaitDraw();
+      // Reset shared called state
+      game.called=new Set(); game.current=null; game.recentBalls=[]; game.callCount=0;
+      waitGame.called=new Set(); waitGame.current=null; waitGame.recentBalls=[]; waitGame.callCount=0;
+      // If this user selected cards → go to game screen
+      if(game.cards.length>0){
+        showScreen('screen-game');
+        renderNumGrid(); renderAllCards();
+      } else {
+        // Observer: show wait screen with live balls
+        showScreen('screen-home');
+        showWaitScreen();
+      }
+    });
+
+    // ✅ FIX: Server says game ended with winner
+    socket.on('game_ended', function(data){
+      console.log('🏆 Game ended:', data);
+      stopAutoGame(); stopWaitDraw();
+      if(game.cards.length===0){
+        // Observer: show winner screen
+        setTxt('w-round', round);
+        setTxt('w-players', data.total_players||game.totalPlayers);
+        setTxt('w-name', data.winner_name||'—');
+        setTxt('w-card', '#'+(data.winner_card||'—'));
+        setTxt('w-prize', (data.prize||0)+' Br');
+        setTxt('w-game-id', data.game_id||'—');
+        document.getElementById('w-card-box').style.display='none';
+        showScreen('screen-winner');
+        document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+        document.getElementById('nav-home').classList.add('active');
+        var fill=document.getElementById('dist-fill');
+        var countEl=document.getElementById('next-count');
+        fill.style.transition='none'; fill.style.width='100%';
+        setTimeout(function(){fill.style.transition='width 10s linear'; fill.style.width='0%';},50);
+        var nc=10;
+        countEl.textContent=nc;
+        var wIv=setInterval(function(){
+          nc--; countEl.textContent=nc;
+          if(nc<=0){clearInterval(wIv); round++; newRound();}
+        },1000);
+      }
     });
 
   }catch(e){
@@ -896,21 +977,26 @@ function generateGameId(){
 ══════════════════════════════════════════ */
 async function checkGameState(){
   var state = await fetchGameState();
-  if(state&&state.game_running){
-    // Game already running on server → show wait screen
+  if(state&&state.game_running&&state.call_count>0){
+    // Game truly in progress with balls already called → show wait screen
     showWaitScreen();
-    timeLeft = state.time_left||35;
     currentGameId = state.game_id;
     setTxt('game-id-label', currentGameId||'—');
+    if(state.called_numbers){
+      state.called_numbers.forEach(function(n){
+        waitGame.called.add(n); game.called.add(n);
+      });
+    }
+    if(state.total_players) game.totalPlayers = state.total_players;
   } else if(state&&!state.game_running){
-    // Use server time_left for sync
+    // Countdown phase — sync timer from server
     timeLeft = state.time_left||35;
     currentGameId = state.game_id||generateGameId();
     setTxt('game-id-label', currentGameId);
     showSelectScreen();
     startTimer();
   } else {
-    // API not available, use local
+    // API not available or game_running but no balls yet — show select screen
     currentGameId = generateGameId();
     setTxt('game-id-label', currentGameId);
     showSelectScreen();
@@ -1423,6 +1509,9 @@ function toggleSoundWait(){
 
 function startAutoGame(){
   stopAutoGame();
+  // Only run local auto-draw if server is NOT sending ball_called events
+  // (fallback for when socket is disconnected)
+  if(socket&&socket.connected) return; // server drives the balls
   game.autoIv=setInterval(function(){
     if(!game.autoRunning||game.called.size>=75){stopAutoGame();return;}
     drawBall();
