@@ -1086,9 +1086,18 @@ async function startGame(){
   clearInterval(timerIv); timerIv=null;
   var cardNums = Array.from(selCards);
 
-  /* Need at least 1 card selected — if none, restart countdown */
-  if(cardNums.length < 1){
-    selCards=new Set(); cardDeductMap={};
+  /* Need at least 2 cards (players) — if not enough, silently refund and restart */
+  if(cardNums.length < 2){
+    /* Refund any selected card back to the exact wallet it came from */
+    selCards.forEach(function(n){
+      var el = document.getElementById('cc-'+n);
+      if(el) el.classList.remove('selected','disabled');
+      var d = cardDeductMap[n] || {fromPlay:10, fromMain:0};
+      userPlayBalance += d.fromPlay;
+      userMainBalance += d.fromMain;
+      delete cardDeductMap[n];
+    });
+    selCards = new Set(); cardDeductMap = {};
     setTxt('sel-count','0'); setTxt('s-win-sel','0'); setTxt('s-win-game','0'); setTxt('s-players','0');
     updateBalanceDisplay();
     timeLeft=35; currentGameId=generateGameId(); setTxt('game-id-label',currentGameId);
