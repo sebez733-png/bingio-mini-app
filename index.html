@@ -476,8 +476,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 /* ══════════════════════════════════════════
    CONFIG
 ══════════════════════════════════════════ */
-var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
-  var API_BASE = 'https://dangling-seldom-sturdily.ngrok-free.dev';
+var API_BASE = 'https://bi-bo-py.onrender.com';
+  var API_BASE = 'https://bi-bo-py.onrender.com';
 
 // ✅ NEW: SocketIO connection for real-time sync
 var socket = null;
@@ -611,7 +611,7 @@ async function updateUserName(firstName){
 /* ══════════════════════════════════════════
    API CALLS
 ══════════════════════════════════════════ */
-var apiHeaders = {'ngrok-skip-browser-warning':'true','Content-Type':'application/json'};
+var apiHeaders = {'Content-Type':'application/json'};
 
 async function fetchBalance(){
   if(!tgUserId) return;
