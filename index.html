@@ -29,9 +29,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .stake-btn:active{transform:scale(0.97);}
 .stake-btn.s10{background:var(--green);color:#000;box-shadow:0 4px 15px rgba(0,200,117,0.3);}
 .stake-btn.s20{background:var(--blue);color:#fff;box-shadow:0 4px 15px rgba(74,158,255,0.3);}
-.stake-stats{display:flex;gap:12px;margin-top:30px;justify-content:center;}
-.stake-stat{text-align:center;font-size:11px;color:var(--muted);}
-.stake-stat strong{display:block;font-size:14px;color:var(--text);font-weight:700;margin-bottom:2px;}
 
 .topbar{background:var(--bg2);padding:8px 6px;display:flex;gap:4px;flex-shrink:0;}
 .stat-box{flex:1;background:var(--bg3);border-radius:8px;padding:5px 4px;text-align:center;}
@@ -188,7 +185,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 <body>
 <div class="app">
   
-  <!-- ✅ ADDED: STAKE SELECTION SCREEN -->
+  <!-- STAKE SELECTION SCREEN -->
   <div class="screen" id="screen-stake">
     <div class="stake-container">
       <div class="stake-logo">🇪🇹 ADWA BINGO</div>
@@ -198,10 +195,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
         <button class="stake-btn s10" onclick="selectStake(10)">Play 10 Birr</button>
         <button class="stake-btn s20" onclick="selectStake(20)">Play 20 Birr</button>
       </div>
-      <div class="stake-stats">
-        <div class="stake-stat"><strong>45,000+</strong>Active Players</div>
-        <div class="stake-stat"><strong>60,000+</strong>Games Played</div>
-        <div class="stake-stat"><strong>500+</strong>Winners Daily</div>
+      <!-- ✅ UPDATED: Replaced fake stats with a nice welcome message -->
+      <div style="margin-top:25px; text-align:center; font-size:13px; color:var(--muted); line-height:1.5;">
+        Thanks for choosing Adwa Bingo! 🇪🇹🍀<br>
+        አድዋ ቢንጎ መጫወቻ ደስ ያለዎት!
       </div>
     </div>
   </div>
@@ -381,7 +378,6 @@ var soundOn=false,currentPeriod='week',currentCategory='deposit';
 var maxWinners=1,winnersThisRound=[],myWinReported=false;
 var socket=null,serverDrivingBalls=false,serverDrivingTimer=null,gamePaused=false;
 
-// ✅ ADDED: Dynamic Stake Variable
 var currentStake = 10;
 
 var game={called:new Set(),current:null,recentBalls:[],autoIv:null,callCount:0,cards:[],marked:[],wonLines:[],cardNums:[],winAmount:0,totalPlayers:0,betDeducted:false,gameId:null};
@@ -391,7 +387,6 @@ function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;
 function colFor(n){return Math.floor((n-1)/15);}
 function letterFor(n){return COLS[colFor(n)];}
 
-// ✅ ADDED: Function to handle Stake Selection
 function selectStake(stake) {
   currentStake = stake;
   setTxt('s-bet-stake', currentStake);
@@ -452,7 +447,6 @@ function buildGrid(){var g=document.getElementById('cards-grid'),h='';for(var i=
 
 var cardDeductMap={};
 
-// ✅ UPDATED: Dynamic Stake Logic (10 or 20)
 function toggleCard(n){
   if(selCards.has(n)){
     selCards.delete(n);
@@ -535,7 +529,6 @@ function tapCard(ci,idx){if(idx===12)return;if(game.marked[ci].has(idx))game.mar
 
 function checkWin(ci){var lines=[];for(var r=0;r<5;r++)lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);for(var c=0;c<5;c++)lines.push([c,c+5,c+10,c+15,c+20]);lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);lines.push([0,4,20,24]);var prev=game.wonLines[ci].size,nw=new Set();lines.forEach(function(line){if(line.every(function(i){return game.marked[ci].has(i);}))nw.add(line);});game.wonLines[ci]=nw;if(nw.size>prev){var alreadyWon=winnersThisRound.some(function(w){return w.cardIndex===ci;});if(alreadyWon)return;var winnerName=(tgUser&&tgUser.first_name)||'You';var cardNum=game.cardNums[ci];winnersThisRound.push({name:winnerName,cardNum:cardNum,cardIndex:ci,userId:tgUserId,card:game.cards[ci],marked:new Set(game.marked[ci]),wonLines:new Set(game.wonLines[ci])});if(socket&&socket.connected){socket.emit('declare_winner',{user_id:tgUserId,name:winnerName,card_num:cardNum,card_index:ci,game_id:game.gameId});}if(winnersThisRound.length>=maxWinners){stopAutoGame();finalizeWinner();}}}
 
-// ✅ UPDATED: Dynamic Prize Calculation based on currentStake
 function finalizeWinner(){stopAutoGame();var realPlayers=game.totalPlayers||game.cardNums.length||1;var totalPot=realPlayers*currentStake;var totalPrize=Math.round(totalPot*0.8);var winnerCount=Math.max(winnersThisRound.length,1);var prizeEach=Math.floor(totalPrize/winnerCount);var iAmWinner=winnersThisRound.some(function(w){return w.userId===tgUserId;});if(iAmWinner&&game.betDeducted){reportWin(prizeEach,game.gameId);}buildWinnerScreen(totalPrize,prizeEach,winnerCount,realPlayers);}
 
 function buildWinnerScreen(totalPrize,prizeEach,winnerCount,realPlayers){setTxt('w-round',round);setTxt('w-players',realPlayers);setTxt('w-game-id',game.gameId||'—');var namesHtml='';if(winnersThisRound.length===0){namesHtml='<div class="winner-name-chip"><span class="wn-crown">👑</span><span>—</span></div>';}else{namesHtml=winnersThisRound.map(function(w){return '<div class="winner-name-chip"><span class="wn-crown">👑</span><span>'+w.name+'</span><span class="wn-card">#'+w.cardNum+'</span></div>';}).join('');}document.getElementById('winners-names-row').innerHTML=namesHtml;setTxt('w-prize',totalPrize+' Br');if(winnerCount>1){setTxt('w-prize-each',prizeEach+' Br each ('+winnerCount+' winners)');}else{setTxt('w-prize-each','');}var firstWinner=winnersThisRound[0];if(firstWinner){renderWinnerCard(firstWinner.card,firstWinner.marked,firstWinner.wonLines);document.getElementById('w-card-box').style.display='block';}else{document.getElementById('w-card-box').style.display='none';}showScreen('screen-winner');document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('nav-home').classList.add('active');startWinnerCountdown();}
@@ -546,7 +539,6 @@ function showObserverWinner(data){var winners=data.winners||[{name:data.winner_n
 
 function startWinnerCountdown(){var fill=document.getElementById('dist-fill');var countEl=document.getElementById('next-count');fill.style.transition='none';fill.style.width='100%';setTimeout(function(){fill.style.transition='width 10s linear';fill.style.width='0%';},50);var nc=10;countEl.textContent=nc;var wIv=setInterval(function(){nc--;countEl.textContent=nc;if(nc<=0){clearInterval(wIv);round++;newRound();}},1000);}
 
-// ✅ UPDATED: Returns to Stake Screen instead of Home
 function newRound(){stopAutoGame();stopWaitDraw();serverDrivingBalls=false;clearTimeout(serverDrivingTimer);gamePaused=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.remove('show');selCards=new Set();game.betDeducted=false;cardDeductMap={};winnersThisRound=[];myWinReported=false;for(var i=1;i<=400;i++){var el=document.getElementById('cc-'+i);if(el)el.classList.remove('selected','disabled');}setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');setTxt('s-players','0');updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showScreen('screen-stake');fetchBalance();}
 
 function dismissCancel(){document.getElementById('cancelled-overlay').classList.remove('show');game.betDeducted=false;newRound();}
