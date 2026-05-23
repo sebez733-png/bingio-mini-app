@@ -437,14 +437,13 @@ async function loadWallet(){updateUserInfo();updateBalanceDisplay();var txs=awai
 
 // FIX 1: Updated Game ID generator to create random Capital letters + Numbers (e.g., AB1234)
 function generateGameId(){
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var nums = '0123456789';
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     var id = '';
-    for(var i=0; i<2; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
-    for(var i=0; i<4; i++) id += nums.charAt(Math.floor(Math.random() * nums.length));
+    for(var i=0; i<8; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     return id;
 }
-
 async function checkGameState(){var state=await fetchGameState();if(state&&state.game_running&&state.call_count>0){currentGameId=state.game_id;setTxt('game-id-label',currentGameId||'—');if(state.called_numbers)state.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});if(state.total_players)game.totalPlayers=state.total_players;showWaitScreen();}else if(state&&!state.game_running){timeLeft=state.time_left||35;currentGameId=state.game_id||generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}else{currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}}
 
 function showWaitScreen(){document.getElementById('select-area').style.display='none';document.getElementById('wait-area').style.display='flex';document.getElementById('home-topbar').style.display='none';startWaitDraw();}
