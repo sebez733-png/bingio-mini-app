@@ -442,7 +442,7 @@ function generateGameId(){
     for(var i=0; i<8; i++) {
         id += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return id;
+    return currentStake + '-' + id;
 }
 async function checkGameState(){var state=await fetchGameState();if(state&&state.game_running&&state.call_count>0){currentGameId=state.game_id;setTxt('game-id-label',currentGameId||'—');if(state.called_numbers)state.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});if(state.total_players)game.totalPlayers=state.total_players;showWaitScreen();}else if(state&&!state.game_running){timeLeft=state.time_left||35;currentGameId=state.game_id||generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}else{currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}}
 
