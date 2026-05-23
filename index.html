@@ -394,11 +394,15 @@ function selectStake(stake) {
   setTxt('w-bet-stake', currentStake);
   setTxt('g-bet-stake', currentStake);
   setTxt('win-bet-stake', currentStake);
+  
+  // Generate a new Game ID with the correct stake
+  currentGameId = generateGameId();
+  setTxt('game-id-label', currentGameId);
+  
   showScreen('screen-home');
   showSelectScreen();
   fetchBalance();
 }
-
 // ✅ ADDED: Function to go back to Stake Selection
 function backToStake() {
   showScreen('screen-stake');
