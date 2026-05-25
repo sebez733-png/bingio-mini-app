@@ -473,7 +473,7 @@ socket.on('game_started',function(data){
 });
 
 socket.on('winner_found',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length===0)showObserverWinner(data);});socket.on('game_ended',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();if(game.cards.length===0)showObserverWinner(data);});}catch(e){}}
-function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();},4000);}
+function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();},8000);}
 
 var apiHeaders={'Content-Type':'application/json'};
 async function fetchBalance(){if(!tgUserId)return;try{var res=await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{headers:apiHeaders});var data=await res.json();if(data.success){userMainBalance=data.main_balance;userPlayBalance=data.play_balance;apiAvailable=true;updateBalanceDisplay();}}catch(e){apiAvailable=false;}}
@@ -577,9 +577,9 @@ setTimeout(function(){
 
 }
 
-function processBall(n){if(gamePaused)return;game.called.add(n);game.current=n;game.recentBalls.push(n);if(game.recentBalls.length>8)game.recentBalls.shift();game.callCount++;setTxt('s-call',game.callCount);speakNumber(n);waitGame.called.add(n);waitGame.current=n;waitGame.recentBalls.push(n);if(waitGame.recentBalls.length>4)waitGame.recentBalls.shift();waitGame.callCount++;setTxt('w-call-top',waitGame.callCount);renderWaitGrid();renderWaitBalls();renderWaitCurrent();if(game.cards.length>0){game.cards.forEach(function(card,ci){card.forEach(function(cell,idx){if(cell.n===n)game.marked[ci].add(idx);});checkWin(ci);});renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();}}
+function processBall(n){if(gamePaused)return;if(game.called.has(n))return;game.called.add(n);game.current=n;game.recentBalls.push(n);if(game.recentBalls.length>8)game.recentBalls.shift();game.callCount++;setTxt('s-call',game.callCount);speakNumber(n);waitGame.called.add(n);waitGame.current=n;waitGame.recentBalls.push(n);if(waitGame.recentBalls.length>4)waitGame.recentBalls.shift();waitGame.callCount++;setTxt('w-call-top',waitGame.callCount);renderWaitGrid();renderWaitBalls();renderWaitCurrent();if(game.cards.length>0){game.cards.forEach(function(card,ci){card.forEach(function(cell,idx){if(cell.n===n)game.marked[ci].add(idx);});checkWin(ci);});renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();}}
 
-function startAutoGame(){stopAutoGame();game.autoIv=setInterval(function(){if(serverDrivingBalls||gamePaused||getReadyActive)return;if(game.called.size>=75){stopAutoGame();finalizeWinner();return;}var pool=[];for(var i=1;i<=75;i++)if(!game.called.has(i))pool.push(i);var n=pool[Math.floor(Math.random()*pool.length)];processBall(n);},2000);}
+function startAutoGame(){stopAutoGame();game.autoIv=setInterval(function(){if(serverDrivingBalls||gamePaused||getReadyActive)return;if(game.called.size>=75){stopAutoGame();finalizeWinner();return;}var pool=[];for(var i=1;i<=75;i++)if(!game.called.has(i))pool.push(i);var n=pool[Math.floor(Math.random()*pool.length)];processBall(n);},2500);}
 function stopAutoGame(){clearInterval(game.autoIv);game.autoIv=null;}
 
 function generateCard(){var card=new Array(25);for(var c=0;c<5;c++){var min=c*15+1,max=c*15+15,pool=[];for(var i=min;i<=max;i++)pool.push(i);for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}for(var r=0;r<5;r++){var idx=r*5+c;card[idx]={c:c,r:r,n:pool[r]};}}card[12]={c:2,r:2,n:'★'};return card;}
