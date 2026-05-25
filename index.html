@@ -537,8 +537,20 @@ showScreen('screen-game');renderNumGrid();renderAllCards();startAutoGame();}
 
 function processBall(n){if(gamePaused)return;game.called.add(n);game.current=n;game.recentBalls.push(n);if(game.recentBalls.length>8)game.recentBalls.shift();game.callCount++;setTxt('s-call',game.callCount);speakNumber(n);waitGame.called.add(n);waitGame.current=n;waitGame.recentBalls.push(n);if(waitGame.recentBalls.length>4)waitGame.recentBalls.shift();waitGame.callCount++;setTxt('w-call-top',waitGame.callCount);renderWaitGrid();renderWaitBalls();renderWaitCurrent();if(game.cards.length>0){game.cards.forEach(function(card,ci){card.forEach(function(cell,idx){if(cell.n===n)game.marked[ci].add(idx);});checkWin(ci);});renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();}}
 
-function startAutoGame(){stopAutoGame();game.autoIv=setInterval(function(){if(serverDrivingBalls||gamePaused)return;if(game.called.size>=75){stopAutoGame();finalizeWinner();return;}var pool=[];for(var i=1;i<=75;i++)if(!game.called.has(i))pool.push(i);var n=pool[Math.floor(Math.random()*pool.length)];processBall(n);},2000);}
-function stopAutoGame(){clearInterval(game.autoIv);game.autoIv=null;}
+function startAutoGame(){
+    stopAutoGame();
+    game.autoIv=setInterval(function(){
+        try{
+            if(gamePaused)return;
+            if(game.called.size>=75){stopAutoGame();finalizeWinner();return;}
+            var pool=[];
+            for(var i=1;i<=75;i++)if(!game.called.has(i))pool.push(i);
+            if(pool.length===0){stopAutoGame();return;}
+            var n=pool[Math.floor(Math.random()*pool.length)];
+            processBall(n);
+        }catch(e){console.error('AutoGame error:',e);}
+    },2000);
+}
 
 function generateCard(){var card=new Array(25);for(var c=0;c<5;c++){var min=c*15+1,max=c*15+15,pool=[];for(var i=min;i<=max;i++)pool.push(i);for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}for(var r=0;r<5;r++){var idx=r*5+c;card[idx]={c:c,r:r,n:pool[r]};}}card[12]={c:2,r:2,n:'★'};return card;}
 
@@ -555,7 +567,7 @@ function renderCurrentBall(){if(!game.current)return;var n=game.current,L=letter
 var voicesLoaded=[];
 function loadVoices(){voicesLoaded=window.speechSynthesis?window.speechSynthesis.getVoices():[];}
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=loadVoices;loadVoices();}
-function speakNumber(n){if(!soundOn||!window.speechSynthesis)return;var L=letterFor(n),amWord=AM_NUMBERS[n]||String(n);window.speechSynthesis.cancel();var u1=new SpeechSynthesisUtterance(L);u1.lang='en-US';u1.rate=0.85;var u2=new SpeechSynthesisUtance(amWord);var amVoice=voicesLoaded.find(function(v){return v.lang&&v.lang.startsWith('am');});if(amVoice)u2.voice=amVoice;u2.lang='am-ET';u2.rate=0.85;window.speechSynthesis.speak(u1);window.speechSynthesis.speak(u2);}
+function speakNumber(n){if(!soundOn||!window.speechSynthesis)return;var L=letterFor(n),amWord=AM_NUMBERS[n]||String(n);window.speechSynthesis.cancel();var u1=new SpeechSynthesisUtterance(L);u1.lang='en-US';u1.rate=0.85;var u2=new SpeechSynthesisUtterance(amWord);var amVoice=voicesLoaded.find(function(v){return v.lang&&v.lang.startsWith('am');});if(amVoice)u2.voice=amVoice;u2.lang='am-ET';u2.rate=0.85;window.speechSynthesis.speak(u1);window.speechSynthesis.speak(u2);}
 
 function tapCard(ci,idx){if(idx===12)return;if(game.marked[ci].has(idx))game.marked[ci].delete(idx);else game.marked[ci].add(idx);checkWin(ci);renderCard(ci);}
 
