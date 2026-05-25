@@ -253,11 +253,21 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
     </div>
   </div>
   
+  <!-- FIX 1: Added Get Ready Screen -->
+  <div class="screen" id="screen-getready">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;">
+      <div style="font-size:52px;animation:bounce .5s ease infinite alternate;">🎯</div>
+      <div style="font-size:28px;font-weight:900;color:var(--yellow);margin-top:12px;letter-spacing:2px;">GET READY!</div>
+      <div style="font-size:16px;color:var(--green);margin-top:8px;">ይዘጋጁ!</div>
+    </div>
+  </div>
+
   <div class="screen" id="screen-game">
     <div class="topbar">
       <div class="stat-box"><div class="stat-label">GAME ID</div><div class="stat-val yellow" id="s-game-id">—</div></div>
       <div class="stat-box"><div class="stat-label">WIN(ደራሽ)</div><div class="stat-val green" id="s-win-game">0</div></div>
-      <div class="stat-box"><div class="stat-label">PLAYERS(ተጫዋቾች)</div><div class="stat-val" id="s-players">0</div></div>
+      <!-- FIX 2: Label says PLAYERS but shows total cards bought -->
+      <div class="stat-box"><div class="stat-label">PLAYERS(ካርት)</div><div class="stat-val" id="s-players">0</div></div>
       <div class="stat-box"><div class="stat-label">BET(መደብ)</div><div class="stat-val orange" id="g-bet-stake">10</div></div>
       <div class="stat-box"><div class="stat-label">CALL(የተጠሩ)</div><div class="stat-val yellow" id="s-call">0</div></div>
     </div>
@@ -376,7 +386,7 @@ var maxWinners=1,winnersThisRound=[],myWinReported=false;
 var socket=null,serverDrivingBalls=false,serverDrivingTimer=null,gamePaused=false;
 
 var currentStake = 10;
-var currentRoom = '10'; // ✅ MULTI-ROOM FIX: Track the current room
+var currentRoom = '10';
 
 var game={called:new Set(),current:null,recentBalls:[],autoIv:null,callCount:0,cards:[],marked:[],wonLines:[],cardNums:[],winAmount:0,totalPlayers:0,betDeducted:false,gameId:null};
 var waitGame={called:new Set(),current:null,recentBalls:[],callCount:0,autoIv:null};
@@ -385,16 +395,14 @@ function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;
 function colFor(n){return Math.floor((n-1)/15);}
 function letterFor(n){return COLS[colFor(n)];}
 
-// ✅ MULTI-ROOM FIX: Select stake and switch rooms
 function selectStake(stake) {
   currentStake = stake;
-  currentRoom = String(stake); // '10' or '20'
+  currentRoom = String(stake);
   
   setTxt('s-bet-stake', currentStake);
   setTxt('w-bet-stake', currentStake);
   setTxt('g-bet-stake', currentStake);
   
-  // Leave the other room, join the correct room
   if (socket && socket.connected) {
     var otherRoom = stake === 10 ? '20' : '10';
     socket.emit('leave_room', {room: otherRoom});
@@ -403,6 +411,16 @@ function selectStake(stake) {
   
   currentGameId = generateGameId();
   setTxt('game-id-label', currentGameId);
+  
+  // FIX 6: Clear old cards and reset when switching rooms
+  selCards = new Set();
+  cardDeductMap = {};
+  for(var i=1;i<=400;i++){
+    var el = document.getElementById('cc-'+i);
+    if(el) el.classList.remove('selected','disabled');
+  }
+  setTxt('sel-count','0');
+  setTxt('s-win-sel','0');
   
   showScreen('screen-home');
   showSelectScreen();
@@ -416,20 +434,21 @@ function backToStake() {
 function initTelegram(){try{if(window.Telegram&&window.Telegram.WebApp){var wa=window.Telegram.WebApp;wa.ready();wa.expand();if(wa.initDataUnsafe&&wa.initDataUnsafe.user){tgUser=wa.initDataUnsafe.user;tgUserId=tgUser.id;updateUserName(tgUser.first_name||'');}}}catch(e){}}
 async function updateUserName(firstName){if(!tgUserId||!firstName||!apiAvailable)return;try{await fetch(API_BASE+'/api/update_name',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:tgUserId,first_name:firstName})});}catch(e){}}
 
-// ✅ MULTI-ROOM FIX: Socket joins specific room based on stake, filters events by room
 function initSocket(){try{socket=io(API_BASE,{transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000,reconnectionAttempts:10,timeout:5000});socket.on('connect',function(){
-    // Join the current room on connect
     socket.emit('join_room', {room: currentRoom});
-});socket.on('disconnect',function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused)startAutoGame();});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});socket.on('countdown_update',function(data){if(data.room && data.room !== currentRoom) return; currentGameId=data.game_id;setTxt('game-id-label',data.game_id);timeLeft=data.time_left;showSelectScreen();if(!timerIv)startTimer();});socket.on('player_joined',function(data){if(data.room && data.room !== currentRoom) return; setTxt('s-players',data.total_players);setTxt('w-players-top',data.total_players);game.totalPlayers=data.total_players;});socket.on('game_state_update',function(data){if(data.room && data.room !== currentRoom) return; if(data.total_players){setTxt('s-players',data.total_players);setTxt('w-players-top',data.total_players);game.totalPlayers=data.total_players;}});socket.on('ball_called',function(data){if(data.room && data.room !== currentRoom) return; var n=data.number;if(!n)return;markServerDriving();processBall(n);});
+});socket.on('disconnect',function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused)startAutoGame();});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});socket.on('countdown_update',function(data){if(data.room && data.room !== currentRoom) return; currentGameId=data.game_id;setTxt('game-id-label',data.game_id);timeLeft=data.time_left;showSelectScreen();if(!timerIv)startTimer();});socket.on('player_joined',function(data){if(data.room && data.room !== currentRoom) return; setTxt('s-players',data.total_players);setTxt('w-players-top',data.total_players);game.totalPlayers=data.total_players;});socket.on('game_state_update',function(data){if(data.room && data.room !== currentRoom) return; if(data.total_players){setTxt('s-players',data.total_players);setTxt('w-players-top',data.total_players);game.totalPlayers=data.total_players;}});socket.on('ball_called',function(data){
+    if(data.room && data.room !== currentRoom) return; 
+    var n=data.number;if(!n)return;
+    markServerDriving();
+    processBall(n);
+});
 
-// ✅ FIX: Don't reset the game if we are already playing this specific game!
 socket.on('game_started',function(data){
     if(data.room && data.room !== currentRoom) return; 
     
-    // If we are already playing this exact game, do NOT reset the call count!
     if(game.cards.length > 0 && game.callCount > 0 && data.game_id === game.gameId) {
         if(data.total_players) game.totalPlayers = data.total_players;
-        return; // Stop here, don't reset
+        return;
     }
     
     currentGameId=data.game_id;
@@ -437,6 +456,8 @@ socket.on('game_started',function(data){
     stopAutoGame();
     stopWaitDraw();
     gamePaused=false;
+    
+    // FIX 5 & 7: Clear called numbers and reset count to 0 for NEW game
     game.called=new Set();
     game.current=null;
     game.recentBalls=[];
@@ -445,11 +466,16 @@ socket.on('game_started',function(data){
     waitGame.current=null;
     waitGame.recentBalls=[];
     waitGame.callCount=0;
+    setTxt('s-call', '0');
+    setTxt('w-call-top', '0');
+    
     winnersThisRound=[];
     myWinReported=false;
     if(game.cards.length>0){
         showScreen('screen-game');
         renderNumGrid();
+        renderRecentBalls();
+        renderCurrentBall();
         renderAllCards();
         startAutoGame();
     }else{
@@ -554,31 +580,50 @@ function toggleCard(n){
     selCards.forEach(function(s){document.getElementById('cc-'+s).classList.add('selected');});
   }
   setTxt('sel-count',selCards.size);
-  var winAmt=Math.round(selCards.size*currentStake*0.8);
-  setTxt('s-win-sel',winAmt);
-  setTxt('s-win-game',winAmt);
-  setTxt('s-players',selCards.size);
-  setTxt('w-players-top',selCards.size);
+  
+  // FIX 3: Real prize calculation displayed with numbers
+  var winAmt = selCards.size * currentStake * 0.8;
+  setTxt('s-win-sel', winAmt + ' Br');
+  setTxt('s-win-game', winAmt + ' Br');
+  // FIX 2: Player count shows total cards bought
+  setTxt('s-players', selCards.size);
+  setTxt('w-players-top', selCards.size);
 }
 
 function startTimer(){clearInterval(timerIv);var el=document.getElementById('s-time');el.textContent=timeLeft+'s';el.style.color='var(--yellow)';timerIv=setInterval(function(){timeLeft--;el.textContent=timeLeft+'s';el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';if(timeLeft<=0){clearInterval(timerIv);timerIv=null;startGame();}},1000);}
 
-async function startGame(){clearInterval(timerIv);timerIv=null;var cardNums=Array.from(selCards);if(cardNums.length<2){selCards.forEach(function(n){var el=document.getElementById('cc-'+n);if(el)el.classList.remove('selected','disabled');var d=cardDeductMap[n]||{fromPlay:currentStake,fromMain:0};userPlayBalance+=d.fromPlay;userMainBalance+=d.fromMain;delete cardDeductMap[n];});selCards=new Set();cardDeductMap={};setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');setTxt('s-players','0');updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);startTimer();return;}var betAmount=cardNums.length*currentStake;var deducted=await deductBet(betAmount);if(!deducted){startTimer();return;}game.cardNums=cardNums;game.gameId=currentGameId;game.cards=cardNums.map(function(){return generateCard();});game.marked=game.cards.map(function(){return new Set([12]);});game.wonLines=game.cards.map(function(){return new Set();});game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;game.winAmount=Math.round(betAmount*0.8);game.totalPlayers=cardNums.length;game.betDeducted=true;winnersThisRound=[];myWinReported=false;recordGamePlayed(game.gameId,cardNums,currentStake);setTxt('s-players',game.totalPlayers);setTxt('w-players-top',game.totalPlayers);setTxt('card1-id',cardNums[0]);setTxt('s-game-id', game.gameId);renderCardHeader('card1-header');if(cardNums.length>=2){setTxt('card2-id',cardNums[1]);renderCardHeader('card2-header');document.getElementById('card2-box').style.display='block';document.getElementById('no-card-slot').style.display='none';}else{document.getElementById('card2-box').style.display='none';document.getElementById('no-card-slot').style.display='flex';}
+async function startGame(){clearInterval(timerIv);timerIv=null;var cardNums=Array.from(selCards);if(cardNums.length<2){selCards.forEach(function(n){var el=document.getElementById('cc-'+n);if(el)el.classList.remove('selected','disabled');var d=cardDeductMap[n]||{fromPlay:currentStake,fromMain:0};userPlayBalance+=d.fromPlay;userMainBalance+=d.fromMain;delete cardDeductMap[n];});selCards=new Set();cardDeductMap={};setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');setTxt('s-players','0');updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);startTimer();return;}var betAmount=cardNums.length*currentStake;var deducted=await deductBet(betAmount);if(!deducted){startTimer();return;}game.cardNums=cardNums;game.gameId=currentGameId;game.cards=cardNums.map(function(){return generateCard();});game.marked=game.cards.map(function(){return new Set([12]);});game.wonLines=game.cards.map(function(){return new Set();});
+// FIX 5 & 7: Make sure called numbers and call count are completely fresh
+game.called=new Set();
+game.current=null;
+game.recentBalls=[];
+game.callCount=0;
+setTxt('s-call', '0');
+game.winAmount=Math.round(betAmount*0.8);
+// FIX 2: totalPlayers = total cards bought
+game.totalPlayers=cardNums.length;
+game.betDeducted=true;winnersThisRound=[];myWinReported=false;recordGamePlayed(game.gameId,cardNums,currentStake);setTxt('s-players',game.totalPlayers);setTxt('w-players-top',game.totalPlayers);setTxt('card1-id',cardNums[0]);setTxt('s-game-id', game.gameId);renderCardHeader('card1-header');if(cardNums.length>=2){setTxt('card2-id',cardNums[1]);renderCardHeader('card2-header');document.getElementById('card2-box').style.display='block';document.getElementById('no-card-slot').style.display='none';}else{document.getElementById('card2-box').style.display='none';document.getElementById('no-card-slot').style.display='flex';}
 
-// ✅ MULTI-ROOM FIX: Emit room with game events
 if(socket&&socket.connected){
   socket.emit('request_countdown', {game_id: currentGameId, room: currentRoom});
   socket.emit('player_ready', {user_id:tgUserId, name:tgUser.first_name||'Player', cards:cardNums, game_id:currentGameId, room: currentRoom});
 }
 
-showScreen('screen-game');renderNumGrid();renderAllCards();
+// FIX 1: Show "Get Ready" screen for 1.5 seconds, then start the game screen
+showScreen('screen-getready');
+renderNumGrid(); 
+renderAllCards();
 
-// ✅ FIX: Wait 5 seconds for server to drive balls before starting fallback auto-game
 setTimeout(function(){
-    if(!serverDrivingBalls && game.cards.length > 0 && !game.autoIv && !gamePaused) {
-        startAutoGame();
-    }
-}, 5000);
+    showScreen('screen-game');
+    
+    // FIX 1: Wait 5 seconds for server to drive balls, then start fallback auto-game
+    setTimeout(function(){
+        if(!serverDrivingBalls && game.cards.length > 0 && !game.autoIv && !gamePaused) {
+            startAutoGame();
+        }
+    }, 5000);
+}, 1500); // 1.5 seconds Get Ready screen
 
 }
 
@@ -608,14 +653,18 @@ function tapCard(ci,idx){if(idx===12)return;if(game.marked[ci].has(idx))game.mar
 
 function checkWin(ci){var lines=[];for(var r=0;r<5;r++)lines.push([r*5,r*5+1,r*5+2,r*5+3,r*5+4]);for(var c=0;c<5;c++)lines.push([c,c+5,c+10,c+15,c+20]);lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);lines.push([0,4,20,24]);var prev=game.wonLines[ci].size,nw=new Set();lines.forEach(function(line){if(line.every(function(i){return game.marked[ci].has(i);}))nw.add(line);});game.wonLines[ci]=nw;if(nw.size>prev){var alreadyWon=winnersThisRound.some(function(w){return w.cardIndex===ci;});if(alreadyWon)return;var winnerName=(tgUser&&tgUser.first_name)||'You';var cardNum=game.cardNums[ci];winnersThisRound.push({name:winnerName,cardNum:cardNum,cardIndex:ci,userId:tgUserId,card:game.cards[ci],marked:new Set(game.marked[ci]),wonLines:new Set(game.wonLines[ci])});
     
-    // ✅ MULTI-ROOM FIX: Emit declare_winner with room
     if(socket&&socket.connected){socket.emit('declare_winner',{user_id:tgUserId,name:winnerName,card_num:cardNum,card_index:ci,game_id:game.gameId, room: currentRoom});}
     
-    if(winnersThisRound.length>=maxWinners){stopAutoGame();finalizeWinner();}}}
+    // FIX 4: Only stop if we reached max winners (allows 1 or more winners based on maxWinners)
+    if(winnersThisRound.length >= maxWinners){stopAutoGame();finalizeWinner();}}}
 
+// FIX 3 & 4: Real prize distribution with numbers for 1 or more winners
 function finalizeWinner(){stopAutoGame();var realPlayers=game.totalPlayers||game.cardNums.length||1;var totalPot=realPlayers*currentStake;var totalPrize=Math.round(totalPot*0.8);var winnerCount=Math.max(winnersThisRound.length,1);var prizeEach=Math.floor(totalPrize/winnerCount);var iAmWinner=winnersThisRound.some(function(w){return w.userId===tgUserId;});if(iAmWinner&&game.betDeducted){reportWin(prizeEach,game.gameId);}buildWinnerScreen(totalPrize,prizeEach,winnerCount,realPlayers);}
 
-function buildWinnerScreen(totalPrize,prizeEach,winnerCount,realPlayers){var titleEl=document.getElementById('winner-title-text');if(winnerCount>1){titleEl.textContent=winnerCount+' PLAYERS WON';}else{titleEl.textContent='BINGO! WINNER!';}var namesHtml='';if(winnersThisRound.length===0){namesHtml='<div class="winner-name-chip"><span class="wn-crown">👑</span><span>—</span></div>';}else{namesHtml=winnersThisRound.map(function(w){return '<div class="winner-name-chip"><span class="wn-crown">👑</span><span>'+w.name+'</span><span class="wn-card">#'+w.cardNum+'</span></div>';}).join('');}document.getElementById('winners-names-row').innerHTML=namesHtml;setTxt('w-prize',totalPrize+' Br');if(winnerCount>1){setTxt('w-prize-each',prizeEach+' Br each ('+winnerCount+' winners)');}else{setTxt('w-prize-each','');}var firstWinner=winnersThisRound[0];if(firstWinner){renderWinnerCard(firstWinner.card,firstWinner.marked,firstWinner.wonLines);document.getElementById('w-card-box').style.display='block';}else{document.getElementById('w-card-box').style.display='none';}showScreen('screen-winner');document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('nav-home').classList.add('active');startWinnerCountdown();}
+function buildWinnerScreen(totalPrize,prizeEach,winnerCount,realPlayers){var titleEl=document.getElementById('winner-title-text');if(winnerCount>1){titleEl.textContent=winnerCount+' PLAYERS WON';}else{titleEl.textContent='BINGO! WINNER!';}var namesHtml='';if(winnersThisRound.length===0){namesHtml='<div class="winner-name-chip"><span class="wn-crown">👑</span><span>—</span></div>';}else{namesHtml=winnersThisRound.map(function(w){return '<div class="winner-name-chip"><span class="wn-crown">👑</span><span>'+w.name+'</span><span class="wn-card">#'+w.cardNum+'</span></div>';}).join('');}document.getElementById('winners-names-row').innerHTML=namesHtml;
+// FIX 3: Prize shows real number with "Br"
+setTxt('w-prize',totalPrize+' Br');
+if(winnerCount>1){setTxt('w-prize-each',prizeEach+' Br each ('+winnerCount+' winners)');}else{setTxt('w-prize-each','');}var firstWinner=winnersThisRound[0];if(firstWinner){renderWinnerCard(firstWinner.card,firstWinner.marked,firstWinner.wonLines);document.getElementById('w-card-box').style.display='block';}else{document.getElementById('w-card-box').style.display='none';}showScreen('screen-winner');document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('nav-home').classList.add('active');startWinnerCountdown();}
 
 function renderWinnerCard(card,marked,wonLines){var wins=new Set();wonLines.forEach(function(line){line.forEach(function(i){wins.add(i);});});document.getElementById('w-card-hdr').innerHTML=COLS.map(function(L){return '<div class="wch '+L+'">'+L+'</div>';}).join('');document.getElementById('w-card-grid').innerHTML=card.map(function(cell,idx){var isFree=cell.n==='★',isWin=wins.has(idx),isMarked=marked.has(idx);var cls=isWin?'wcc wwin':isFree?'wcc wfree':isMarked?'wcc wmarked':'wcc';return '<div class="'+cls+'">'+cell.n+'</div>';}).join('');}
 
@@ -623,7 +672,33 @@ function showObserverWinner(data){var winners=data.winners||[{name:data.winner_n
 
 function startWinnerCountdown(){var fill=document.getElementById('dist-fill');var countEl=document.getElementById('next-count');fill.style.transition='none';fill.style.width='100%';setTimeout(function(){fill.style.transition='width 10s linear';fill.style.width='0%';},50);var nc=10;countEl.textContent=nc;var wIv=setInterval(function(){nc--;countEl.textContent=nc;if(nc<=0){clearInterval(wIv);round++;newRound();}},1000);}
 
-function newRound(){stopAutoGame();stopWaitDraw();serverDrivingBalls=false;clearTimeout(serverDrivingTimer);gamePaused=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.remove('show');selCards=new Set();game.betDeducted=false;cardDeductMap={};winnersThisRound=[];myWinReported=false;for(var i=1;i<=400;i++){var el=document.getElementById('cc-'+i);if(el)el.classList.remove('selected','disabled');}setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');setTxt('s-players','0');updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showScreen('screen-home');showSelectScreen();fetchBalance();startTimer();}
+function newRound(){stopAutoGame();stopWaitDraw();serverDrivingBalls=false;clearTimeout(serverDrivingTimer);gamePaused=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.remove('show');selCards=new Set();game.betDeducted=false;cardDeductMap={};winnersThisRound=[];myWinReported=false;for(var i=1;i<=400;i++){var el=document.getElementById('cc-'+i);if(el)el.classList.remove('selected','disabled');}setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');setTxt('s-players','0');
+// FIX 5 & 7: Fully reset the game state so last game's balls don't show
+game.called=new Set();
+game.current=null;
+game.recentBalls=[];
+game.callCount=0;
+game.cards=[];
+game.marked=[];
+game.wonLines=[];
+game.cardNums=[];
+waitGame.called=new Set();
+waitGame.current=null;
+waitGame.recentBalls=[];
+waitGame.callCount=0;
+setTxt('s-call','0');
+setTxt('w-call-top','0');
+// Reset current ball display
+var cbBig=document.getElementById('current-big');
+if(cbBig){cbBig.style.background='#333';cbBig.style.color='#fff';cbBig.style.boxShadow='none';}
+setTxt('cb-letter','-');
+setTxt('cb-num','-');
+var wCbBig=document.getElementById('wait-current-big');
+if(wCbBig){wCbBig.style.background='#333';wCbBig.style.color='#fff';wCbBig.style.boxShadow='none';}
+setTxt('wait-cb-letter','-');
+setTxt('wait-cb-num','-');
+
+updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showScreen('screen-home');showSelectScreen();fetchBalance();startTimer();}
 
 function dismissCancel(){document.getElementById('cancelled-overlay').classList.remove('show');game.betDeducted=false;newRound();}
 
