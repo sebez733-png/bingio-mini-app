@@ -42,7 +42,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .nav-btn .nav-icon{font-size:20px;line-height:1;}
 .select-info{background:var(--bg2);text-align:center;padding:5px 12px;font-size:11px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.07);}
 .select-info span{color:var(--orange);font-weight:700;}
-.game-id-bar{background:var(--bg3);text-align:center;padding:3px;font-size:9px;color:var(--muted);}
+.game-id-bar{background:var(--bg3);text-align:center;padding:2px 3px;font-size:8px;color:var(--muted);}
 .game-id-bar span{color:var(--yellow);font-weight:700;}
 .cards-scroll{flex:1;overflow-y:auto;padding:5px;background:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,0.07) 0%,rgba(155,89,182,0.05) 50%,transparent 80%);}
 .cards-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
@@ -212,7 +212,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       <div style="padding:5px 12px; display:flex; justify-content:flex-start;">
         <button onclick="backToStake()" style="background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; transition: all .2s;">⬅️ Change Stake</button>
       </div>
-      <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient PLAY balance! በቂ ሂሳብ የለም!</div>
+      <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient balance! በቂ ሂሳብ የለም!</div>
       <div class="game-id-bar">Game ID: <span id="game-id-label">—</span></div>
       <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
       <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
@@ -430,7 +430,6 @@ function initSocket(){try{socket=io(API_BASE,{transports:['websocket','polling']
     if(data.room && data.room !== currentRoom) return; 
     var n=data.number;if(!n)return;
     markServerDriving();
-    // If Get Ready is showing, queue the ball instead of processing immediately
     if(getReadyActive){
         pendingServerBalls.push(n);
         return;
@@ -459,12 +458,14 @@ socket.on('game_started',function(data){
     waitGame.called=new Set();waitGame.current=null;waitGame.recentBalls=[];waitGame.callCount=0;
     setTxt('s-call', '0');setTxt('w-call-top', '0');
     
+    var rbEl=document.getElementById('recent-balls');if(rbEl)rbEl.innerHTML='';
+    var wrbEl=document.getElementById('wait-recent-balls');if(wrbEl)wrbEl.innerHTML='';
+    
     winnersThisRound=[];myWinReported=false;
     if(game.cards.length>0){
         showScreen('screen-game');
         updatePlayersDisplay();
         renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
-        // DON'T start auto game here if Get Ready is active
         if(!getReadyActive) startAutoGame();
     }else{
         showScreen('screen-home');showWaitScreen();
@@ -498,7 +499,7 @@ async function loadLeaderboard(){updateBalanceDisplay();var winners=await fetchT
 
 async function loadWallet(){updateUserInfo();updateBalanceDisplay();var txs=await fetchTransactions();var rows=document.getElementById('wl-tx-rows');if(!txs.length){rows.innerHTML='<div class="empty-row">No transactions yet</div>';return;}rows.innerHTML=txs.map(function(tx){var cls=(tx.type==='deposit'||tx.type==='bingo_win')?'green':'red';var icon=tx.type==='deposit'?'💳':tx.type==='bingo_win'?'🏆':tx.type==='withdraw'?'💸':'🎮';var date=tx.time?tx.time.split('T')[0]:'—';return '<div class="table-row"><span>'+icon+' '+tx.type+'</span><span class="'+cls+'">'+tx.amount+' Br</span><span class="green">Done</span><span class="muted">'+date+'</span></div>';}).join('');}
 
-function generateGameId(){var chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';var id='';for(var i=0;i<10;i++){id+=chars.charAt(Math.floor(Math.random()*chars.length));}return id;}
+function generateGameId(){var letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';var chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';var id=letters.charAt(Math.floor(Math.random()*letters.length))+letters.charAt(Math.floor(Math.random()*letters.length));for(var i=0;i<6;i++){id+=chars.charAt(Math.floor(Math.random()*chars.length));}return id;}
 async function checkGameState(){var state=await fetchGameState();if(state&&state.game_running&&state.call_count>0){currentGameId=state.game_id;setTxt('game-id-label',currentGameId||'—');if(state.called_numbers)state.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});if(state.total_players){game.totalPlayers=state.total_players;updatePlayersDisplay();}showWaitScreen();}else if(state&&!state.game_running){timeLeft=state.time_left||35;currentGameId=state.game_id||generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}else{currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}}
 
 function showWaitScreen(){document.getElementById('select-area').style.display='none';document.getElementById('wait-area').style.display='flex';document.getElementById('home-topbar').style.display='none';startWaitDraw();}
@@ -545,9 +546,8 @@ updatePlayersDisplay();setTxt('card1-id',cardNums[0]);setTxt('s-game-id',game.ga
 
 if(socket&&socket.connected){socket.emit('request_countdown',{game_id:currentGameId,room:currentRoom});socket.emit('player_ready',{user_id:tgUserId,name:tgUser.first_name||'Player',cards:cardNums,game_id:currentGameId,room:currentRoom});}
 
-showScreen('screen-game');renderNumGrid();renderAllCards();
+showScreen('screen-game');renderNumGrid();renderRecentBalls();renderAllCards();
 
-// Block all ball calling during Get Ready
 getReadyActive=true;
 pendingServerBalls=[];
 
@@ -557,22 +557,16 @@ var cbnEl=document.getElementById('cb-num');cbnEl.style.fontSize='11px';cbnEl.st
 setTxt('cb-letter','');
 var currentLabelEl=document.getElementById('game-current-label');if(currentLabelEl)currentLabelEl.textContent='GET READY!';
 
-// After 2 seconds: end Get Ready, call first ball IMMEDIATELY
 setTimeout(function(){
     getReadyActive=false;
     
-    // Process any server balls that came during Get Ready
     if(pendingServerBalls.length>0){
-        // Process the first queued ball as the first call
         processBall(pendingServerBalls.shift());
-        // Process any remaining queued balls
         while(pendingServerBalls.length>0){
             processBall(pendingServerBalls.shift());
         }
-        // Start auto game for subsequent balls
         if(!game.autoIv&&!gamePaused) startAutoGame();
     } else {
-        // No server ball came - call first ball ourselves IMMEDIATELY
         if(game.cards.length>0&&!gamePaused){
             var pool=[];for(var i=1;i<=75;i++)if(!game.called.has(i))pool.push(i);
             if(pool.length>0){var n=pool[Math.floor(Math.random()*pool.length)];processBall(n);}
@@ -631,6 +625,8 @@ var cbBig=document.getElementById('current-big');if(cbBig){cbBig.style.backgroun
 var cbnEl=document.getElementById('cb-num');if(cbnEl){cbnEl.style.fontSize='22px';cbnEl.style.lineHeight='1';cbnEl.textContent='-';}
 setTxt('cb-letter','-');
 var currentLabelEl=document.getElementById('game-current-label');if(currentLabelEl)currentLabelEl.textContent='Current';
+var rbEl=document.getElementById('recent-balls');if(rbEl)rbEl.innerHTML='';
+var wrbEl=document.getElementById('wait-recent-balls');if(wrbEl)wrbEl.innerHTML='';
 var wCbBig=document.getElementById('wait-current-big');if(wCbBig){wCbBig.style.background='#333';wCbBig.style.color='#fff';wCbBig.style.boxShadow='none';}
 setTxt('wait-cb-letter','-');setTxt('wait-cb-num','-');
 
