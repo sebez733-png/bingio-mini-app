@@ -379,32 +379,32 @@ var userMainBalance=0, userPlayBalance=0, apiAvailable=false;
 var currentStake=10, currentRoom='10';
 var soundOn=false, currentPeriod='week', currentCategory='deposit';
 
-// Server-synced game state
-var serverPhase='countdown';       // 'countdown' | 'playing' | 'ended'
-var serverGameId=null;
-var serverCalled=new Set();        // all called balls from server
+// Server-synced game state (all from server, never generated locally)
+var serverPhase='countdown';
+var serverGameId=null;             // ALWAYS from server — NEVER generated on frontend
+var serverCalled=new Set();
 var serverCurrent=null;
 var serverRecentBalls=[];
 var serverCallCount=0;
-var serverCountdownEnd=null;       // epoch ms from server
-var serverTotalPlayers=0;
+var serverCountdownEnd=null;       // epoch ms
+var serverUniquePlayers=0;         // unique player count (not cards)
+var serverTotalCards=0;            // total cards purchased
 
-// Countdown display ticker (client-side, driven by server timestamp)
+// Countdown display ticker (driven by server timestamp, not local duration)
 var countdownTickIv=null;
 
-// My cards (generated locally, registered with server)
+// My private card state (never sent to other users)
 var myCards=[];
 var myCardNums=[];
 var myMarked=[];
 var myWonLines=[];
-var myWinAmount=0;
 var myBetDeducted=false;
 var myWinReported=false;
 var winnersThisRound=[];
 var maxWinners=1;
 var gamePaused=false;
 
-// Card selection state
+// Card selection state (private per user)
 var selCards=new Set();
 var cardDeductMap={};
 
@@ -485,27 +485,28 @@ function initSocket(){
     socket.on('game_state_sync',function(data){
       if(data.room&&data.room!==currentRoom)return;
       serverPhase=data.phase||'countdown';
-      serverGameId=data.game_id;
+      serverGameId=data.game_id;              // use server ID — never change it
       serverCalled=new Set(data.called_numbers||[]);
       serverCurrent=data.current_number||null;
       serverCallCount=serverCalled.size;
-      serverTotalPlayers=data.total_players||0;
-      serverCountdownEnd=data.countdown_end?data.countdown_end*1000:null; // convert to ms
+      serverUniquePlayers=data.unique_players||0;
+      serverTotalCards=data.total_cards||0;
+      serverCountdownEnd=data.countdown_end?data.countdown_end*1000:null;
       gamePaused=data.paused||false;
 
+      // Show server game ID everywhere — never a local one
       setTxt('game-id-label',serverGameId||'—');
       setTxt('s-game-id',serverGameId||'—');
-      setTxt('s-players',serverTotalPlayers);
-      setTxt('w-players-top',serverTotalPlayers);
+      // #7: show total cards/tickets, not unique users
+      setTxt('s-players',serverTotalCards);
+      setTxt('w-players-top',serverTotalCards);
 
       if(serverPhase==='countdown'){
-        // Show card selection if we don't have cards yet, else wait screen
         if(myCards.length===0){showSelectScreen();}else{showWaitScreen();}
         startCountdownDisplay();
       } else if(serverPhase==='playing'){
         stopCountdownDisplay();
         if(myCards.length>0){
-          // Re-sync called balls onto our cards
           serverCalled.forEach(function(n){
             myCards.forEach(function(card,ci){
               card.forEach(function(cell,idx){if(cell.n===n)myMarked[ci].add(idx);});
@@ -514,40 +515,32 @@ function initSocket(){
           showScreen('screen-game');
           renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
         } else {
-          showWaitScreen();
-          renderWaitGrid();
-          if(serverCurrent){
-            renderWaitBalls();renderWaitCurrent();
-          }
+          showWaitScreen();renderWaitGrid();
+          if(serverCurrent){renderWaitBalls();renderWaitCurrent();}
         }
         setTxt('s-call',serverCallCount);
         setTxt('w-call-top',serverCallCount);
       }
 
-      if(gamePaused){
-        document.getElementById('paused-overlay').classList.add('show');
-      } else {
-        document.getElementById('paused-overlay').classList.remove('show');
-      }
+      if(gamePaused){document.getElementById('paused-overlay').classList.add('show');}
+      else{document.getElementById('paused-overlay').classList.remove('show');}
     });
 
     // ── Server starts countdown ──
     socket.on('countdown_start',function(data){
       if(data.room&&data.room!==currentRoom)return;
       serverPhase='countdown';
-      serverGameId=data.game_id;
-      serverCalled=new Set();
-      serverCurrent=null;
-      serverRecentBalls=[];
-      serverCallCount=0;
-      serverTotalPlayers=0;
+      serverGameId=data.game_id;             // authoritative server ID
+      serverCalled=new Set();serverCurrent=null;serverRecentBalls=[];serverCallCount=0;
+      serverUniquePlayers=0;serverTotalCards=0;
       serverCountdownEnd=data.countdown_end?data.countdown_end*1000:null;
-      winnersThisRound=[];
-      myWinReported=false;
+      winnersThisRound=[];myWinReported=false;gamePaused=false;
 
       setTxt('game-id-label',serverGameId||'—');
       setTxt('s-game-id',serverGameId||'—');
+      // Reset card counter for new round
       setTxt('s-players',0);setTxt('w-players-top',0);
+      setTxt('s-call',0);setTxt('w-call-top',0);
 
       if(myCards.length===0){showSelectScreen();}else{showWaitScreen();}
       startCountdownDisplay();
@@ -559,31 +552,49 @@ function initSocket(){
       var t=data.time_left||0;
       var el=document.getElementById('s-time');
       if(el){el.textContent=t+'s';el.style.color=t<=10?'var(--orange)':'var(--yellow)';}
+      // #7: update total card count from server tick (not unique user count)
+      if(data.total_cards!==undefined){
+        serverTotalCards=data.total_cards;
+        setTxt('s-players',serverTotalCards);
+        setTxt('w-players-top',serverTotalCards);
+      }
+    });
+
+    // ── Not enough players — server restarts countdown ──
+    socket.on('countdown_insufficient_players',function(data){
+      if(data.room&&data.room!==currentRoom)return;
+      var msg=data.message||'Not enough players. Restarting...';
+      // Show a brief toast/notice (reuse game-id bar)
+      var bar=document.getElementById('game-id-label');
+      if(bar){
+        var orig=bar.textContent;
+        bar.textContent='⚠️ '+msg;
+        bar.style.color='var(--orange)';
+        setTimeout(function(){bar.textContent=orig;bar.style.color='';},3000);
+      }
+      // Reset card selection so players can re-select in next countdown
+      // (keep selections — server carries over existing players)
     });
 
     // ── Server starts the game ──
     socket.on('game_started',function(data){
       if(data.room&&data.room!==currentRoom)return;
       serverPhase='playing';
-      serverGameId=data.game_id||serverGameId;
-      serverTotalPlayers=data.total_players||serverTotalPlayers;
-      serverCalled=new Set();
-      serverCurrent=null;
-      serverRecentBalls=[];
-      serverCallCount=0;
-      winnersThisRound=[];
-      myWinReported=false;
-      gamePaused=false;
+      serverGameId=data.game_id||serverGameId;  // always keep server ID
+      serverUniquePlayers=data.unique_players||serverUniquePlayers;
+      serverTotalCards=data.total_cards||serverTotalCards;
+      serverCalled=new Set();serverCurrent=null;serverRecentBalls=[];serverCallCount=0;
+      winnersThisRound=[];myWinReported=false;gamePaused=false;
       document.getElementById('paused-overlay').classList.remove('show');
       stopCountdownDisplay();
 
-      setTxt('s-players',serverTotalPlayers);
-      setTxt('w-players-top',serverTotalPlayers);
+      // #7: show total cards/tickets in counter
+      setTxt('s-players',serverTotalCards);
+      setTxt('w-players-top',serverTotalCards);
       setTxt('s-call',0);setTxt('w-call-top',0);
       setTxt('s-game-id',serverGameId||'—');
 
       if(myCards.length>0){
-        // Reset marks for new game
         myMarked=myCards.map(function(){return new Set([12]);});
         myWonLines=myCards.map(function(){return new Set();});
         showScreen('screen-game');
@@ -622,12 +633,14 @@ function initSocket(){
       }
     });
 
-    // ── Player joined ──
+    // ── Player joined — show total CARDS (tickets), not unique users ──
     socket.on('player_joined',function(data){
       if(data.room&&data.room!==currentRoom)return;
-      serverTotalPlayers=data.total_players||serverTotalPlayers;
-      setTxt('s-players',serverTotalPlayers);
-      setTxt('w-players-top',serverTotalPlayers);
+      // #7: counter = total cards/tickets purchased, not unique user count
+      serverTotalCards=data.total_cards||serverTotalCards;
+      serverUniquePlayers=data.unique_players||serverUniquePlayers;
+      setTxt('s-players',serverTotalCards);      // shows total cards
+      setTxt('w-players-top',serverTotalCards);  // shows total cards
     });
 
     // ── Winner found (server validated) ──
@@ -636,12 +649,14 @@ function initSocket(){
       serverPhase='ended';
       var winners=data.winners||[{name:data.winner_name||'—',cardNum:data.card_num||'—'}];
       var prize=data.prize||0;
-      var totalPlayers=data.total_players||serverTotalPlayers;
       var wc=winners.length;
 
-      // Report win to API if I am the winner
-      var iAmWinner=winners.some(function(w){return String(w.userId||w.user_id)===String(tgUserId);});
-      if(!iAmWinner&&data.user_id&&String(data.user_id)===String(tgUserId))iAmWinner=true;
+      // Check if I am the winner — compare as string
+      var myIdStr=String(tgUserId||'');
+      var iAmWinner=winners.some(function(w){return String(w.user_id||'')===myIdStr;});
+      if(!iAmWinner&&data.user_id&&String(data.user_id)===myIdStr)iAmWinner=true;
+
+      // Only report win for myself — private API call
       if(iAmWinner&&myBetDeducted&&!myWinReported){
         var prizeEach=Math.floor(prize/Math.max(wc,1));
         reportWin(prizeEach,serverGameId);
@@ -651,27 +666,32 @@ function initSocket(){
       var titleEl=document.getElementById('winner-title-text');
       titleEl.textContent=wc>1?(wc+' PLAYERS WON'):'BINGO! WINNER!';
 
+      // Show winner names (public info — only name + card number, not money details)
       var namesHtml=winners.map(function(w){
         return '<div class="winner-name-chip"><span class="wn-crown">👑</span><span>'+(w.name||w.winner_name||'—')+'</span><span class="wn-card">#'+(w.cardNum||w.card_num||'—')+'</span></div>';
       }).join('');
       document.getElementById('winners-names-row').innerHTML=namesHtml;
 
+      // Prize amount — shown to everyone (it's the public pot)
       setTxt('w-prize',prize+' Br');
       setTxt('w-prize-each',wc>1?Math.floor(prize/wc)+' Br each ('+wc+' winners)':'');
 
-      // Show my winning card if I am winner
-      var myWinnerEntry=null;
+      // Show MY winning card — only if I won (private to me)
       if(iAmWinner&&myCards.length>0){
+        var myWinnerCard=null;
         myCards.forEach(function(card,ci){
-          if(myWonLines[ci].size>0&&!myWinnerEntry){
-            myWinnerEntry={card:card,marked:new Set(myMarked[ci]),wonLines:new Set(myWonLines[ci])};
+          if(myWonLines[ci].size>0&&!myWinnerCard){
+            myWinnerCard={card:card,marked:new Set(myMarked[ci]),wonLines:new Set(myWonLines[ci])};
           }
         });
-      }
-      if(myWinnerEntry){
-        renderWinnerCard(myWinnerEntry.card,myWinnerEntry.marked,myWinnerEntry.wonLines);
-        document.getElementById('w-card-box').style.display='block';
+        if(myWinnerCard){
+          renderWinnerCard(myWinnerCard.card,myWinnerCard.marked,myWinnerCard.wonLines);
+          document.getElementById('w-card-box').style.display='block';
+        } else {
+          document.getElementById('w-card-box').style.display='none';
+        }
       } else {
+        // I did not win — don't show any card (privacy)
         document.getElementById('w-card-box').style.display='none';
       }
 
@@ -852,7 +872,7 @@ function buildGrid(){
 }
 
 function toggleCard(n){
-  if(serverPhase!=='countdown'){return;} // can only select during countdown
+  if(serverPhase!=='countdown'){return;}
   if(selCards.has(n)){
     selCards.delete(n);
     document.getElementById('cc-'+n).classList.remove('selected');
@@ -880,8 +900,10 @@ function toggleCard(n){
     selCards.forEach(function(s){document.getElementById('cc-'+s).classList.add('selected');});
   }
   setTxt('sel-count',selCards.size);
-  var winAmt=Math.round(selCards.size*currentStake*0.8);
-  setTxt('s-win-sel',winAmt);setTxt('s-win-game',winAmt);
+  // WIN amount is private — only shown to this user in their own topbar
+  var myPotential=Math.round(selCards.size*currentStake*0.8);
+  setTxt('s-win-sel',myPotential);
+  // Do NOT broadcast this to others — it stays local to this user's display only
 }
 
 // ════════════════════════════════════════════════════
@@ -893,10 +915,8 @@ function toggleCard(n){
 // Called when server starts the game and we have selected cards
 async function activateMyCards(){
   var cardNums=Array.from(selCards);
-  if(cardNums.length<1){
-    // No cards selected — watch as observer
-    myCards=[];myCardNums=[];return;
-  }
+  if(cardNums.length<1){myCards=[];myCardNums=[];return;}
+
   var betAmount=cardNums.length*currentStake;
   var deducted=await deductBet(betAmount);
   if(!deducted){
@@ -910,18 +930,21 @@ async function activateMyCards(){
     updateBalanceDisplay();
     myCards=[];myCardNums=[];return;
   }
+
   myCardNums=cardNums;
   myCards=cardNums.map(function(){return generateCard();});
   myMarked=myCards.map(function(){return new Set([12]);});
   myWonLines=myCards.map(function(){return new Set();});
-  myWinAmount=Math.round(betAmount*0.8);
   myBetDeducted=true;
   winnersThisRound=[];myWinReported=false;
 
+  // Use the server's game ID — NEVER generate a new one here
   recordGamePlayed(serverGameId,cardNums,currentStake);
 
   setTxt('card1-id',cardNums[0]);
   setTxt('s-game-id',serverGameId||'—');
+  // Show my private potential win only in my own game topbar
+  setTxt('s-win-game',Math.round(betAmount*0.8));
   renderCardHeader('card1-header');
   if(cardNums.length>=2){
     setTxt('card2-id',cardNums[1]);
@@ -933,13 +956,14 @@ async function activateMyCards(){
     document.getElementById('no-card-slot').style.display='flex';
   }
 
-  // Tell server we are ready
+  // Tell server about THIS player (unique user_id) with their card count
+  // Server de-duplicates by user_id so 1 player buying 2 cards = 1 unique player
   if(socket&&socket.connected){
     socket.emit('player_ready',{
-      user_id:tgUserId,
+      user_id:tgUserId,                    // unique identifier
       name:tgUser?tgUser.first_name:'Player',
-      cards:cardNums,
-      game_id:serverGameId,
+      cards:cardNums,                      // card numbers (server counts length for card_count)
+      game_id:serverGameId,               // always the server's game ID
       room:currentRoom
     });
   }
@@ -1118,20 +1142,38 @@ function startWinnerCountdown(){
   fill.style.transition='none';fill.style.width='100%';
   setTimeout(function(){fill.style.transition='width 10s linear';fill.style.width='0%';},50);
   var nc=10;countEl.textContent=nc;
-  var wIv=setInterval(function(){nc--;countEl.textContent=nc;if(nc<=0){clearInterval(wIv);}},1000);
-  // When the server starts a new countdown, game_state_sync / countdown_start will fire and reset UI
+  var wIv=setInterval(function(){
+    nc--;countEl.textContent=nc;
+    if(nc<=0){
+      clearInterval(wIv);
+      // Reset my local private state — server will push countdown_start automatically
+      myCards=[];myCardNums=[];myMarked=[];myWonLines=[];
+      myBetDeducted=false;myWinReported=false;
+      selCards=new Set();cardDeductMap={};
+      for(var i=1;i<=400;i++){var el=document.getElementById('cc-'+i);if(el)el.classList.remove('selected','disabled');}
+      setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');
+      updateBalanceDisplay();
+      showScreen('screen-home');
+      showSelectScreen();
+      fetchBalance();
+      // Do NOT start any local timer — server drives next round
+    }
+  },1000);
 }
 
 function dismissCancel(){
   document.getElementById('cancelled-overlay').classList.remove('show');
-  // Reset my state, go back to home
+  // Reset all my private game state
   myCards=[];myCardNums=[];myMarked=[];myWonLines=[];
-  myBetDeducted=false;selCards=new Set();cardDeductMap={};
+  myBetDeducted=false;myWinReported=false;
+  selCards=new Set();cardDeductMap={};
   for(var i=1;i<=400;i++){var el=document.getElementById('cc-'+i);if(el)el.classList.remove('selected','disabled');}
   setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');
   updateBalanceDisplay();
   showScreen('screen-home');
   showSelectScreen();
+  fetchBalance();
+  // server will push next countdown_start automatically — no local timer
 }
 
 // ════════════════════════════════════════════════════
