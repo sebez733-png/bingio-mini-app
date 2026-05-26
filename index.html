@@ -473,8 +473,7 @@ socket.on('game_started',function(data){
 });
 
 socket.on('winner_found',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length===0)showObserverWinner(data);});socket.on('game_ended',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();if(game.cards.length===0)showObserverWinner(data);});}catch(e){}}
-function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();},8000);}
-
+function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();},4000);}
 var apiHeaders={'Content-Type':'application/json'};
 async function fetchBalance(){if(!tgUserId)return;try{var res=await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{headers:apiHeaders});var data=await res.json();if(data.success){userMainBalance=data.main_balance;userPlayBalance=data.play_balance;apiAvailable=true;updateBalanceDisplay();}}catch(e){apiAvailable=false;}}
 async function fetchGameState(){try{var res=await fetch(API_BASE+'/api/game_state?room='+currentRoom,{headers:apiHeaders});return await res.json();}catch(e){return null;}}
