@@ -465,7 +465,6 @@ function initSocket(){
       document.getElementById('cancelled-overlay').classList.add('show');
     });
 
-    // ✅ FIX: always sync timer from server, no blocking check
     socket.on('countdown_update',function(data){
       if(data.room && data.room !== currentRoom) return;
       currentGameId=data.game_id;
@@ -544,6 +543,7 @@ function initSocket(){
 
   }catch(e){}
 }
+function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();},2000);}
     
     // ✅ FIX 2: removed "if(game.cards.length > 0) return" 
     // so ALL users always sync their timer from server
