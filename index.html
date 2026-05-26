@@ -606,16 +606,20 @@ async function checkGameState(){
       setTxt('w-call-top', waitGame.callCount);
       showWaitScreen();
     }
-  } else if(state && !state.game_running && state.game_id){
-    currentGameId = state.game_id;
-    setTxt('game-id-label', currentGameId);
+  } else if(state && !state.game_running){
+    if(state.game_id){
+      currentGameId = state.game_id;
+      setTxt('game-id-label', currentGameId);
+    }
     timeLeft = state.time_left || 35;
     showSelectScreen();
     startTimer();
   } else {
     currentGameId = generateGameId();
     setTxt('game-id-label', currentGameId);
+    timeLeft = 35;
     showSelectScreen();
+    startTimer();
   }
 }
 
