@@ -426,72 +426,7 @@ async function updateUserName(firstName){if(!tgUserId||!firstName||!apiAvailable
 
 function initSocket(){try{socket=io(API_BASE,{transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000,reconnectionAttempts:10,timeout:5000});socket.on('connect',function(){
     socket.emit('join_room', {room: currentRoom});
-    // Request full game state sync
-    socket.emit('request_sync', {room: currentRoom});
-});socket.on('disconnect',function(){serverDrivingBalls=false;});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;getReadyActive=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});socket.on('countdown_update',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length>0)return; currentGameId=data.game_id;setTxt('game-id-label',data.game_id);timeLeft=data.time_left;showSelectScreen();if(!timerIv)startTimer();});socket.on('player_joined',function(data){if(data.room && data.room !== currentRoom) return; game.totalPlayers=data.total_players;updatePlayersDisplay();});socket.on('game_state_update',function(data){if(data.room && data.room !== currentRoom) return; if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}});
-
-socket.on('sync_game_state',function(data){
-    if(data.room && data.room !== currentRoom) return;
-    
-    // Restore all called balls from server
-    if(data.called_numbers && data.called_numbers.length > 0) {
-        data.called_numbers.forEach(function(n){
-            if(!game.called.has(n)) {
-                game.called.add(n);
-                waitGame.called.add(n);
-            }
-        });
-        game.callCount = game.called.size;
-        waitGame.callCount = waitGame.called.size;
-        setTxt('s-call', game.callCount);
-        setTxt('w-call-top', waitGame.callCount);
-        
-        // Set current to last called number
-        var last = data.called_numbers[data.called_numbers.length - 1];
-        game.current = last;
-        waitGame.current = last;
-        
-        // Build recent balls arrays
-        game.recentBalls = data.called_numbers.slice(-8);
-        waitGame.recentBalls = data.called_numbers.slice(-4);
-        
-        // Render everything
-        renderNumGrid();
-        renderRecentBalls();
-        renderCurrentBall();
-        renderWaitGrid();
-        renderWaitBalls();
-        renderWaitCurrent();
-        
-        // If player has cards, also mark them
-        if(game.cards.length > 0) {
-            game.cards.forEach(function(card, ci){
-                card.forEach(function(cell, idx){
-                    if(game.called.has(cell.n)) game.marked[ci].add(idx);
-                });
-                checkWin(ci);
-            });
-            renderAllCards();
-        }
-    }
-    
-    if(data.paused) {
-        gamePaused = true;
-        document.getElementById('paused-overlay').classList.add('show');
-        stopAutoGame();
-    }
-    
-    if(data.winner_declared) {
-        stopAutoGame();
-    }
-    
-    if(data.total_players) {
-        game.totalPlayers = data.total_players;
-        updatePlayersDisplay();
-    }
-});
-
-socket.on('ball_called',function(data){
+});socket.on('disconnect',function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;getReadyActive=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});socket.on('countdown_update',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length>0)return; currentGameId=data.game_id;setTxt('game-id-label',data.game_id);timeLeft=data.time_left;showSelectScreen();if(!timerIv)startTimer();});socket.on('player_joined',function(data){if(data.room && data.room !== currentRoom) return; game.totalPlayers=data.total_players;updatePlayersDisplay();});socket.on('game_state_update',function(data){if(data.room && data.room !== currentRoom) return; if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}});socket.on('ball_called',function(data){
     if(data.room && data.room !== currentRoom) return; 
     var n=data.number;if(!n)return;
     markServerDriving();
@@ -531,23 +466,14 @@ socket.on('game_started',function(data){
         showScreen('screen-game');
         updatePlayersDisplay();
         renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
-        // Server drives all ball calls - DO NOT start local auto-caller
-        // Request sync to get any balls already called
-        if(socket && socket.connected) {
-            socket.emit('request_sync', {room: currentRoom});
-        }
+        if(!getReadyActive) startAutoGame();
     }else{
         showScreen('screen-home');showWaitScreen();
-    }
-    
-    // Request full sync to get all called balls if joining mid-game
-    if(socket && socket.connected) {
-        socket.emit('request_sync', {room: currentRoom});
     }
 });
 
 socket.on('winner_found',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length===0)showObserverWinner(data);});socket.on('game_ended',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();if(game.cards.length===0)showObserverWinner(data);});}catch(e){}}
-function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;},2000);}
+function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();},2000);}
 var apiHeaders={'Content-Type':'application/json'};
 async function fetchBalance(){if(!tgUserId)return;try{var res=await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{headers:apiHeaders});var data=await res.json();if(data.success){userMainBalance=data.main_balance;userPlayBalance=data.play_balance;apiAvailable=true;updateBalanceDisplay();}}catch(e){apiAvailable=false;}}
 async function fetchGameState(){try{var res=await fetch(API_BASE+'/api/game_state?room='+currentRoom,{headers:apiHeaders});return await res.json();}catch(e){return null;}}
