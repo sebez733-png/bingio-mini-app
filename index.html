@@ -23,7 +23,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .stake-logo{font-size:38px;font-weight:900;color:var(--orange);margin-bottom:5px;letter-spacing:1px;}
 .stake-sub{font-size:14px;color:var(--muted);margin-bottom:35px;}
 .stake-box{width:100%;max-width:280px;}
-.stake-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:15px;}
+.stake-title{font-size:16px;font-weight:800;color:var(--orange);margin-bottom:15px;letter-spacing:0.5px;}
 .stake-btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:20px;font-weight:800;cursor:pointer;margin-bottom:14px;transition:transform 0.15s, box-shadow 0.15s;letter-spacing:0.5px;}
 .stake-btn:active{transform:scale(0.97);}
 .stake-btn.s10{background:var(--green);color:#000;box-shadow:0 4px 15px rgba(0,200,117,0.3);}
@@ -31,7 +31,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 
 .topbar{background:var(--bg2);padding:8px 6px;display:flex;gap:4px;flex-shrink:0;}
 .stat-box{flex:1;background:var(--bg3);border-radius:8px;padding:5px 4px;text-align:center;}
-.stat-label{font-size:8px;color:var(--muted);letter-spacing:.2px;text-transform:uppercase;}
+.stat-label{font-size:8px;font-weight:800;color:var(--orange);letter-spacing:.5px;text-transform:uppercase;text-shadow:0 0 8px rgba(255,107,53,0.5);}
 .stat-val{font-size:15px;font-weight:700;line-height:1.2;color:#fff;}
 .stat-val.green{color:var(--green);}
 .stat-val.yellow{color:var(--yellow);}
@@ -40,9 +40,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .nav-btn{flex:1;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-size:10px;font-weight:600;transition:all .2s;}
 .nav-btn.active{color:var(--orange);}
 .nav-btn .nav-icon{font-size:20px;line-height:1;}
-.select-info{background:var(--bg2);text-align:center;padding:5px 12px;font-size:11px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.07);}
-.select-info span{color:var(--orange);font-weight:700;}
-.game-id-bar{background:var(--bg3);text-align:center;padding:2px 3px;font-size:8px;color:var(--muted);}
+.select-info{background:var(--bg2);text-align:center;padding:5px 12px;font-size:11px;font-weight:700;color:var(--blue);border-bottom:1px solid rgba(255,255,255,0.07);letter-spacing:0.3px;text-shadow:0 0 6px rgba(74,158,255,0.4);}
+.select-info span{color:var(--yellow);font-weight:800;}
+.game-id-bar{background:var(--bg3);text-align:center;padding:2px 3px;font-size:9px;font-weight:800;color:var(--yellow);letter-spacing:0.5px;text-shadow:0 0 8px rgba(255,215,0,0.4);}
 .game-id-bar span{color:var(--yellow);font-weight:700;}
 .cards-scroll{flex:1;overflow-y:auto;padding:5px;background:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,0.07) 0%,rgba(155,89,182,0.05) 50%,transparent 80%);}
 .cards-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
@@ -210,7 +210,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
     </div>
     <div id="select-area">
       <div style="padding:5px 12px; display:flex; justify-content:flex-start;">
-        <button onclick="backToStake()" style="background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; transition: all .2s;">⬅️ Change Stake</button>
+        <button onclick="backToStake()" style="background:transparent; border:1px solid var(--orange); color:var(--orange); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; transition: all .2s; letter-spacing:0.3px; text-shadow:0 0 6px rgba(255,107,53,0.4);">⬅️ Change Stake</button>
       </div>
       <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient balance! በቂ ሂሳብ የለም!</div>
       <div class="game-id-bar">Game ID: <span id="game-id-label">—</span></div>
