@@ -628,6 +628,20 @@ function toggleSoundWait(){soundOn=!soundOn;var wt=document.getElementById('wait
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
 
+// ============================================================
+// NEW FUNCTION ADDED - Step 1: Request current game state
+// ============================================================
+function requestCurrentGameState() {
+    if (!socket || !socket.connected) {
+        console.log('Socket not connected, retrying in 1s...');
+        setTimeout(requestCurrentGameState, 1000);
+        return;
+    }
+    console.log('Requesting current game state for room:', currentRoom);
+    socket.emit('request_game_state', { room: currentRoom });
+}
+// ============================================================
+
 buildGrid();initTelegram();initSocket();fetchBalance().then(function(){updateUserInfo();checkGameState();showScreen('screen-stake');});
 </script>
 </body>
