@@ -402,8 +402,10 @@ function selectStake(stake) {
     socket.emit('leave_room', {room: otherRoom});
     socket.emit('join_room', {room: currentRoom});
   }
-  currentGameId = generateGameId();
-  setTxt('game-id-label', currentGameId);
+  // ── FIX 1: Do NOT generate a local game ID here.
+  // The server will send the real game ID via countdown_update or game_state.
+  currentGameId = null;
+  setTxt('game-id-label', '...');
   selCards = new Set();
   cardDeductMap = {};
   for(var i=1;i<=400;i++){
@@ -415,6 +417,8 @@ function selectStake(stake) {
   showScreen('screen-home');
   showSelectScreen();
   fetchBalance();
+  // Ask server for current state right away
+  requestCurrentGameState();
 }
 
 function backToStake() {
@@ -426,7 +430,53 @@ async function updateUserName(firstName){if(!tgUserId||!firstName||!apiAvailable
 
 function initSocket(){try{socket=io(API_BASE,{transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000,reconnectionAttempts:10,timeout:5000});socket.on('connect',function(){
     socket.emit('join_room', {room: currentRoom});
-});socket.on('disconnect',function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;getReadyActive=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});socket.on('countdown_update',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length>0)return; currentGameId=data.game_id;setTxt('game-id-label',data.game_id);timeLeft=data.time_left;showSelectScreen();if(!timerIv)startTimer();});socket.on('player_joined',function(data){if(data.room && data.room !== currentRoom) return; game.totalPlayers=data.total_players;updatePlayersDisplay();});socket.on('game_state_update',function(data){if(data.room && data.room !== currentRoom) return; if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}});socket.on('ball_called',function(data){
+    // ── FIX 2: On reconnect, ask server for current state instead of starting local timer
+    requestCurrentGameState();
+});socket.on('disconnect',function(){
+    serverDrivingBalls=false;
+    // ── FIX 2b: Do NOT fall back to local startAutoGame on disconnect
+    // Just wait for reconnect and server to drive again
+});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;getReadyActive=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});
+
+socket.on('countdown_update',function(data){
+    if(data.room && data.room !== currentRoom) return;
+    if(game.cards.length>0) return;
+    // ── FIX 1: Always use server's game ID and time, never local
+    currentGameId = data.game_id;
+    setTxt('game-id-label', data.game_id);
+    timeLeft = data.time_left;
+    setTxt('s-time', timeLeft+'s');
+    var el = document.getElementById('s-time');
+    if(el) el.style.color = timeLeft<=10 ? 'var(--orange)' : 'var(--yellow)';
+    showSelectScreen();
+    // ── FIX 3: Do NOT start a local timer here; just display server's time
+    // (server keeps sending countdown_update every second)
+});
+
+socket.on('player_joined',function(data){if(data.room && data.room !== currentRoom) return; game.totalPlayers=data.total_players;updatePlayersDisplay();});socket.on('game_state_update',function(data){if(data.room && data.room !== currentRoom) return; if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}});
+
+// ── FIX 2c: Handle server's game_state_response to sync on join/reconnect
+socket.on('game_state_response', function(data){
+    if(data.room && data.room !== currentRoom) return;
+    if(data.game_running && data.call_count > 0){
+        // A game is in progress - show wait screen
+        currentGameId = data.game_id;
+        setTxt('game-id-label', currentGameId||'—');
+        if(data.called_numbers) data.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});
+        if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}
+        if(game.cards.length === 0) { showScreen('screen-home'); showWaitScreen(); }
+    } else {
+        // Between games - show select screen, use server's game_id and time
+        currentGameId = data.game_id || null;
+        if(currentGameId) setTxt('game-id-label', currentGameId);
+        timeLeft = data.time_left || 35;
+        setTxt('s-time', timeLeft+'s');
+        if(game.cards.length === 0) { showScreen('screen-home'); showSelectScreen(); }
+        // ── FIX 3: Do NOT start local timer; server countdown_update drives the display
+    }
+});
+
+socket.on('ball_called',function(data){
     if(data.room && data.room !== currentRoom) return; 
     var n=data.number;if(!n)return;
     markServerDriving();
@@ -448,10 +498,13 @@ socket.on('game_started',function(data){
         return;
     }
     
-    currentGameId=data.game_id;
+    // ── FIX 1: Always use server's game ID
+    currentGameId = data.game_id;
     if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}
     stopAutoGame();
     stopWaitDraw();
+    // ── FIX 3: Stop local timer when game starts
+    clearInterval(timerIv); timerIv=null;
     gamePaused=false;
     
     game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;
@@ -466,14 +519,19 @@ socket.on('game_started',function(data){
         showScreen('screen-game');
         updatePlayersDisplay();
         renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();
-        if(!getReadyActive) startAutoGame();
+        // ── FIX 4: Do NOT call startAutoGame() here; server drives all balls via ball_called
     }else{
         showScreen('screen-home');showWaitScreen();
     }
 });
 
 socket.on('winner_found',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length===0)showObserverWinner(data);});socket.on('game_ended',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();if(game.cards.length===0)showObserverWinner(data);});}catch(e){}}
-function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();},2000);}
+
+function markServerDriving(){serverDrivingBalls=true;clearTimeout(serverDrivingTimer);serverDrivingTimer=setTimeout(function(){serverDrivingBalls=false;
+    // ── FIX 4: Do NOT fall back to local ball drawing when server goes quiet
+    // If server stops sending balls, just wait — do not generate local random balls
+},5000);}
+
 var apiHeaders={'Content-Type':'application/json'};
 async function fetchBalance(){if(!tgUserId)return;try{var res=await fetch(API_BASE+'/api/balance?user_id='+tgUserId,{headers:apiHeaders});var data=await res.json();if(data.success){userMainBalance=data.main_balance;userPlayBalance=data.play_balance;apiAvailable=true;updateBalanceDisplay();}}catch(e){apiAvailable=false;}}
 async function fetchGameState(){try{var res=await fetch(API_BASE+'/api/game_state?room='+currentRoom,{headers:apiHeaders});return await res.json();}catch(e){return null;}}
@@ -498,8 +556,38 @@ async function loadLeaderboard(){updateBalanceDisplay();var winners=await fetchT
 
 async function loadWallet(){updateUserInfo();updateBalanceDisplay();var txs=await fetchTransactions();var rows=document.getElementById('wl-tx-rows');if(!txs.length){rows.innerHTML='<div class="empty-row">No transactions yet</div>';return;}rows.innerHTML=txs.map(function(tx){var cls=(tx.type==='deposit'||tx.type==='bingo_win')?'green':'red';var icon=tx.type==='deposit'?'💳':tx.type==='bingo_win'?'🏆':tx.type==='withdraw'?'💸':'🎮';var date=tx.time?tx.time.split('T')[0]:'—';return '<div class="table-row"><span>'+icon+' '+tx.type+'</span><span class="'+cls+'">'+tx.amount+' Br</span><span class="green">Done</span><span class="muted">'+date+'</span></div>';}).join('');}
 
+// ── FIX 3: generateGameId kept for card selection UI only — never used as the real game ID
 function generateGameId(){var letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';var chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';var id=letters.charAt(Math.floor(Math.random()*letters.length))+letters.charAt(Math.floor(Math.random()*letters.length));for(var i=0;i<6;i++){id+=chars.charAt(Math.floor(Math.random()*chars.length));}return id;}
-async function checkGameState(){var state=await fetchGameState();if(state&&state.game_running&&state.call_count>0){currentGameId=state.game_id;setTxt('game-id-label',currentGameId||'—');if(state.called_numbers)state.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});if(state.total_players){game.totalPlayers=state.total_players;updatePlayersDisplay();}showWaitScreen();}else if(state&&!state.game_running){timeLeft=state.time_left||35;currentGameId=state.game_id||generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}else{currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}}
+
+async function checkGameState(){
+    // ── FIX: Prefer socket-based state; use REST as fallback only
+    if(socket && socket.connected){
+        requestCurrentGameState();
+        return;
+    }
+    var state=await fetchGameState();
+    if(state&&state.game_running&&state.call_count>0){
+        // ── FIX 1: Use server's game ID
+        currentGameId=state.game_id;
+        setTxt('game-id-label',currentGameId||'—');
+        if(state.called_numbers)state.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});
+        if(state.total_players){game.totalPlayers=state.total_players;updatePlayersDisplay();}
+        showWaitScreen();
+    }else if(state&&!state.game_running){
+        // ── FIX 1 & 3: Use server's game ID and time, no local timer
+        timeLeft=state.time_left||35;
+        currentGameId=state.game_id||null;
+        if(currentGameId) setTxt('game-id-label',currentGameId);
+        setTxt('s-time', timeLeft+'s');
+        showSelectScreen();
+        // ── FIX 3: No local timer started — server countdown_update will drive the display
+    }else{
+        // Server unreachable — show blank select screen, wait for socket events
+        setTxt('game-id-label','...');
+        setTxt('s-time','--');
+        showSelectScreen();
+    }
+}
 
 function showWaitScreen(){document.getElementById('select-area').style.display='none';document.getElementById('wait-area').style.display='flex';document.getElementById('home-topbar').style.display='none';startWaitDraw();}
 function showSelectScreen(){document.getElementById('select-area').style.display='';document.getElementById('wait-area').style.display='none';document.getElementById('home-topbar').style.display='flex';stopWaitDraw();}
@@ -536,14 +624,35 @@ function toggleCard(n){
   game.totalPlayers=selCards.size;updatePlayersDisplay();
 }
 
-function startTimer(){clearInterval(timerIv);var el=document.getElementById('s-time');el.textContent=timeLeft+'s';el.style.color='var(--yellow)';timerIv=setInterval(function(){timeLeft--;el.textContent=timeLeft+'s';el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';if(timeLeft<=0){clearInterval(timerIv);timerIv=null;startGame();}},1000);}
+// ── FIX 3: startTimer is now only used as a last-resort fallback when socket is disconnected
+// Under normal operation the server's countdown_update events drive the display
+function startTimer(){
+    clearInterval(timerIv);
+    var el=document.getElementById('s-time');
+    el.textContent=timeLeft+'s';
+    el.style.color='var(--yellow)';
+    timerIv=setInterval(function(){
+        // If socket is connected, server is sending countdown_update — stop local timer
+        if(socket && socket.connected){clearInterval(timerIv);timerIv=null;return;}
+        timeLeft--;
+        el.textContent=timeLeft+'s';
+        el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';
+        if(timeLeft<=0){clearInterval(timerIv);timerIv=null;startGame();}
+    },1000);
+}
 
-async function startGame(){clearInterval(timerIv);timerIv=null;var cardNums=Array.from(selCards);if(cardNums.length<2){selCards.forEach(function(n){var el=document.getElementById('cc-'+n);if(el)el.classList.remove('selected','disabled');var d=cardDeductMap[n]||{fromPlay:currentStake,fromMain:0};userPlayBalance+=d.fromPlay;userMainBalance+=d.fromMain;delete cardDeductMap[n];});selCards=new Set();cardDeductMap={};setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');game.totalPlayers=0;updatePlayersDisplay();updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);startTimer();return;}var betAmount=cardNums.length*currentStake;var deducted=await deductBet(betAmount);if(!deducted){startTimer();return;}game.cardNums=cardNums;game.gameId=currentGameId;game.cards=cardNums.map(function(){return generateCard();});game.marked=game.cards.map(function(){return new Set([12]);});game.wonLines=game.cards.map(function(){return new Set();});
+async function startGame(){clearInterval(timerIv);timerIv=null;var cardNums=Array.from(selCards);if(cardNums.length<2){selCards.forEach(function(n){var el=document.getElementById('cc-'+n);if(el)el.classList.remove('selected','disabled');var d=cardDeductMap[n]||{fromPlay:currentStake,fromMain:0};userPlayBalance+=d.fromPlay;userMainBalance+=d.fromMain;delete cardDeductMap[n];});selCards=new Set();cardDeductMap={};setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');game.totalPlayers=0;updatePlayersDisplay();updateBalanceDisplay();
+    // ── FIX 3: Don't restart local timer; wait for server countdown_update
+    return;}
+var betAmount=cardNums.length*currentStake;var deducted=await deductBet(betAmount);if(!deducted){return;}
+// ── FIX 1: Use the server's currentGameId (from countdown_update), not a locally generated one
+var gameIdToUse = currentGameId || generateGameId();
+game.cardNums=cardNums;game.gameId=gameIdToUse;game.cards=cardNums.map(function(){return generateCard();});game.marked=game.cards.map(function(){return new Set([12]);});game.wonLines=game.cards.map(function(){return new Set();});
 game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;setTxt('s-call','0');
 game.winAmount=Math.round(betAmount*0.8);game.totalPlayers=cardNums.length;game.betDeducted=true;winnersThisRound=[];myWinReported=false;recordGamePlayed(game.gameId,cardNums,currentStake);
 updatePlayersDisplay();setTxt('card1-id',cardNums[0]);setTxt('s-game-id',game.gameId);renderCardHeader('card1-header');if(cardNums.length>=2){setTxt('card2-id',cardNums[1]);renderCardHeader('card2-header');document.getElementById('card2-box').style.display='block';document.getElementById('no-card-slot').style.display='none';}else{document.getElementById('card2-box').style.display='none';document.getElementById('no-card-slot').style.display='flex';}
 
-if(socket&&socket.connected){socket.emit('request_countdown',{game_id:currentGameId,room:currentRoom});socket.emit('player_ready',{user_id:tgUserId,name:tgUser.first_name||'Player',cards:cardNums,game_id:currentGameId,room:currentRoom});}
+if(socket&&socket.connected){socket.emit('request_countdown',{game_id:gameIdToUse,room:currentRoom});socket.emit('player_ready',{user_id:tgUserId,name:tgUser.first_name||'Player',cards:cardNums,game_id:gameIdToUse,room:currentRoom});}
 
 showScreen('screen-game');renderNumGrid();renderRecentBalls();renderAllCards();
 
@@ -562,13 +671,16 @@ setTimeout(function(){
         processBall(pendingServerBalls.shift());
     }
     markServerDriving();
+    // ── FIX 4: Do NOT call startAutoGame() — server drives all balls
 },2000);
 
 }
 
 function processBall(n){if(gamePaused)return;if(game.called.has(n))return;game.called.add(n);game.current=n;game.recentBalls.push(n);if(game.recentBalls.length>8)game.recentBalls.shift();game.callCount++;setTxt('s-call',game.callCount);speakNumber(n);waitGame.called.add(n);waitGame.current=n;waitGame.recentBalls.push(n);if(waitGame.recentBalls.length>4)waitGame.recentBalls.shift();waitGame.callCount++;setTxt('w-call-top',waitGame.callCount);renderWaitGrid();renderWaitBalls();renderWaitCurrent();if(game.cards.length>0){game.cards.forEach(function(card,ci){card.forEach(function(cell,idx){if(cell.n===n)game.marked[ci].add(idx);});checkWin(ci);});renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();}}
 
-function startAutoGame(){stopAutoGame();game.autoIv=setInterval(function(){if(serverDrivingBalls||gamePaused||getReadyActive)return;if(game.called.size>=75){stopAutoGame();finalizeWinner();return;}var pool=[];for(var i=1;i<=75;i++)if(!game.called.has(i))pool.push(i);var n=pool[Math.floor(Math.random()*pool.length)];processBall(n);},3000);}
+// ── FIX 4: startAutoGame is disabled — server drives all balls via ball_called socket event
+// Kept as empty stub so any legacy call doesn't throw an error
+function startAutoGame(){ /* disabled — server is the only ball source */ }
 function stopAutoGame(){clearInterval(game.autoIv);game.autoIv=null;}
 
 function generateCard(){var card=new Array(25);for(var c=0;c<5;c++){var min=c*15+1,max=c*15+15,pool=[];for(var i=min;i<=max;i++)pool.push(i);for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}for(var r=0;r<5;r++){var idx=r*5+c;card[idx]={c:c,r:r,n:pool[r]};}}card[12]={c:2,r:2,n:'★'};return card;}
@@ -605,21 +717,38 @@ function showObserverWinner(data){var winners=data.winners||[{name:data.winner_n
 
 function startWinnerCountdown(){var fill=document.getElementById('dist-fill');var countEl=document.getElementById('next-count');fill.style.transition='none';fill.style.width='100%';setTimeout(function(){fill.style.transition='width 10s linear';fill.style.width='0%';},50);var nc=10;countEl.textContent=nc;var wIv=setInterval(function(){nc--;countEl.textContent=nc;if(nc<=0){clearInterval(wIv);round++;newRound();}},1000);}
 
-function newRound(){stopAutoGame();stopWaitDraw();serverDrivingBalls=false;clearTimeout(serverDrivingTimer);gamePaused=false;getReadyActive=false;pendingServerBalls=[];document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.remove('show');selCards=new Set();game.betDeducted=false;cardDeductMap={};winnersThisRound=[];myWinReported=false;for(var i=1;i<=400;i++){var el=document.getElementById('cc-'+i);if(el)el.classList.remove('selected','disabled');}setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');
-game.totalPlayers=0;updatePlayersDisplay();
-game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;game.cards=[];game.marked=[];game.wonLines=[];game.cardNums=[];
-waitGame.called=new Set();waitGame.current=null;waitGame.recentBalls=[];waitGame.callCount=0;
-setTxt('s-call','0');setTxt('w-call-top','0');
-var cbBig=document.getElementById('current-big');if(cbBig){cbBig.style.background='#333';cbBig.style.color='#fff';cbBig.style.boxShadow='none';}
-var cbnEl=document.getElementById('cb-num');if(cbnEl){cbnEl.style.fontSize='22px';cbnEl.style.lineHeight='1';cbnEl.textContent='-';}
-setTxt('cb-letter','-');
-var currentLabelEl=document.getElementById('game-current-label');if(currentLabelEl)currentLabelEl.textContent='Current';
-var rbEl=document.getElementById('recent-balls');if(rbEl)rbEl.innerHTML='';
-var wrbEl=document.getElementById('wait-recent-balls');if(wrbEl)wrbEl.innerHTML='';
-var wCbBig=document.getElementById('wait-current-big');if(wCbBig){wCbBig.style.background='#333';wCbBig.style.color='#fff';wCbBig.style.boxShadow='none';}
-setTxt('wait-cb-letter','-');setTxt('wait-cb-num','-');
-
-updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showScreen('screen-home');showSelectScreen();fetchBalance();startTimer();}
+function newRound(){
+    stopAutoGame();stopWaitDraw();
+    serverDrivingBalls=false;clearTimeout(serverDrivingTimer);
+    // ── FIX 3: Stop local timer
+    clearInterval(timerIv);timerIv=null;
+    gamePaused=false;getReadyActive=false;pendingServerBalls=[];
+    document.getElementById('paused-overlay').classList.remove('show');
+    document.getElementById('cancelled-overlay').classList.remove('show');
+    selCards=new Set();game.betDeducted=false;cardDeductMap={};winnersThisRound=[];myWinReported=false;
+    for(var i=1;i<=400;i++){var el=document.getElementById('cc-'+i);if(el)el.classList.remove('selected','disabled');}
+    setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');
+    game.totalPlayers=0;updatePlayersDisplay();
+    game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;game.cards=[];game.marked=[];game.wonLines=[];game.cardNums=[];
+    waitGame.called=new Set();waitGame.current=null;waitGame.recentBalls=[];waitGame.callCount=0;
+    setTxt('s-call','0');setTxt('w-call-top','0');
+    var cbBig=document.getElementById('current-big');if(cbBig){cbBig.style.background='#333';cbBig.style.color='#fff';cbBig.style.boxShadow='none';}
+    var cbnEl=document.getElementById('cb-num');if(cbnEl){cbnEl.style.fontSize='22px';cbnEl.style.lineHeight='1';cbnEl.textContent='-';}
+    setTxt('cb-letter','-');
+    var currentLabelEl=document.getElementById('game-current-label');if(currentLabelEl)currentLabelEl.textContent='Current';
+    var rbEl=document.getElementById('recent-balls');if(rbEl)rbEl.innerHTML='';
+    var wrbEl=document.getElementById('wait-recent-balls');if(wrbEl)wrbEl.innerHTML='';
+    var wCbBig=document.getElementById('wait-current-big');if(wCbBig){wCbBig.style.background='#333';wCbBig.style.color='#fff';wCbBig.style.boxShadow='none';}
+    setTxt('wait-cb-letter','-');setTxt('wait-cb-num','-');
+    updateBalanceDisplay();
+    // ── FIX 1 & 3: Reset game ID, show "..." until server sends countdown_update
+    currentGameId=null;
+    setTxt('game-id-label','...');
+    setTxt('s-time','--');
+    showScreen('screen-home');showSelectScreen();fetchBalance();
+    // ── FIX: Request fresh server state instead of starting local timer
+    requestCurrentGameState();
+}
 
 function dismissCancel(){document.getElementById('cancelled-overlay').classList.remove('show');game.betDeducted=false;newRound();}
 
@@ -628,19 +757,13 @@ function toggleSoundWait(){soundOn=!soundOn;var wt=document.getElementById('wait
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
 
-// ============================================================
-// NEW FUNCTION ADDED - Step 1: Request current game state
-// ============================================================
 function requestCurrentGameState() {
     if (!socket || !socket.connected) {
-        console.log('Socket not connected, retrying in 1s...');
         setTimeout(requestCurrentGameState, 1000);
         return;
     }
-    console.log('Requesting current game state for room:', currentRoom);
     socket.emit('request_game_state', { room: currentRoom });
 }
-// ============================================================
 
 buildGrid();initTelegram();initSocket();fetchBalance().then(function(){updateUserInfo();checkGameState();showScreen('screen-stake');});
 </script>
