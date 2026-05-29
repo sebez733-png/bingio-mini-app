@@ -48,14 +48,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .cards-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
 .card-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);border:1px solid rgba(255,107,53,0.4);transition:all .15s;user-select:none;}
 .card-cell:active{transform:scale(0.93);}
-.card-cell.selected{background:var(--orange);color:#000;border-color:var(--orange);box-shadow:0 0 8px rgba(255,107,53,0.6);transform:scale(1.05);}
+/* ✅ FIX PROBLEM 1: My selected cards are now GREEN */
+.card-cell.selected{background:var(--green);color:#000;border-color:var(--green);box-shadow:0 0 8px rgba(0,200,117,0.6);transform:scale(1.05);}
 .card-cell.disabled{opacity:0.3;cursor:not-allowed;}
 .bottom-bar{background:var(--bg2);padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
 .selected-info{flex:1;font-size:12px;color:var(--muted);}
 .selected-info strong{color:var(--text);font-size:14px;}
 .no-balance-msg{background:#e74c3c;color:#fff;text-align:center;padding:8px 12px;font-size:11px;font-weight:600;display:none;}
 
-/* ✅ FIX PROBLEM 3, 4, 5: Players Selection List Styles */
 #players-selecting{max-height:120px;overflow-y:auto;background:var(--bg3);padding:6px 8px;border-top:1px solid rgba(255,255,255,0.07);}
 .player-selection-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:6px;margin-bottom:4px;font-size:11px;font-weight:600;}
 .player-me{background:rgba(0,200,117,0.15);border:1px solid var(--green);color:var(--green);}
@@ -225,10 +225,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       <div class="no-balance-msg" id="no-balance-msg">⚠️ Insufficient balance! በቂ ሂሳብ የለም!</div>
       <div class="game-id-bar">Game ID: <span id="game-id-label">—</span></div>
       <div class="select-info">YOU CAN SELECT UP TO <span>2 CARDS</span><br>እስከ 2 ካርቴላ መምረጥ ይችላሉ</div>
-      
-      <!-- ✅ FIX PROBLEM 3 & 4: Container to show WHO selected WHAT -->
       <div id="players-selecting"></div>
-
       <div class="cards-scroll"><div class="cards-grid" id="cards-grid"></div></div>
       <div class="bottom-bar">
         <div class="selected-info">Selected: <strong id="sel-count">0</strong> / 2</div>
@@ -391,8 +388,6 @@ var pendingServerBalls=[];
 
 var currentStake = 10;
 var currentRoom = '10';
-
-// ✅ FIX PROBLEM 3, 4: Global array to store connected players
 var allPlayers = {};
 
 var game={called:new Set(),current:null,recentBalls:[],autoIv:null,callCount:0,cards:[],marked:[],wonLines:[],cardNums:[],winAmount:0,totalPlayers:0,betDeducted:false,gameId:null};
@@ -408,12 +403,10 @@ function updatePlayersDisplay(){
   setTxt('w-players-top', p);
 }
 
-// ✅ FIX PROBLEM 3, 4, 5: Function to render WHO selected WHAT with Colors
 function renderPlayersList(playersData) {
   var el = document.getElementById('players-selecting');
   if (!el) return;
   el.innerHTML = '';
-  
   if (!playersData || Object.keys(playersData).length === 0) return;
   
   for (var uid in playersData) {
@@ -423,13 +416,11 @@ function renderPlayersList(playersData) {
     var nameStr = isMe ? '🟢 You' : '🟠 ' + (p.name || 'Player');
     var cardsArr = p.cards || [];
     var cardsHtml = '';
-    
     if (cardsArr.length > 0) {
       cardsHtml = cardsArr.map(function(c) { return '<span>' + c + '</span>'; }).join('');
     } else {
       cardsHtml = '<span>Waiting...</span>';
     }
-    
     el.innerHTML += '<div class="player-selection-row ' + cls + '">' +
       '<div>' + nameStr + '</div>' +
       '<div class="player-cards-chips">' + cardsHtml + '</div>' +
@@ -448,12 +439,12 @@ function selectStake(stake) {
     socket.emit('leave_room', {room: otherRoom});
     socket.emit('join_room', {room: currentRoom});
   }
-  currentGameId = generateGameId();
-  setTxt('game-id-label', currentGameId);
+  // ✅ FIX PROBLEM 3: Do NOT generate random Game ID. Wait for server.
+  currentGameId = null;
+  setTxt('game-id-label', '—');
+  
   selCards = new Set();
   cardDeductMap = {};
-  
-  // ✅ FIX PROBLEM 6: Clear list on new round/stake change
   allPlayers = {};
   renderPlayersList(allPlayers);
   
@@ -477,14 +468,25 @@ async function updateUserName(firstName){if(!tgUserId||!firstName||!apiAvailable
 
 function initSocket(){try{socket=io(API_BASE,{transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000,reconnectionAttempts:10,timeout:5000});socket.on('connect',function(){
     socket.emit('join_room', {room: currentRoom});
-});socket.on('disconnect',function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;getReadyActive=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});socket.on('countdown_update',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length>0)return; currentGameId=data.game_id;setTxt('game-id-label',data.game_id);timeLeft=data.time_left;showSelectScreen();if(!timerIv)startTimer();});
+});socket.on('disconnect',function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;getReadyActive=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});
 
-// ✅ FIX PROBLEM 3: Listen to player_joined, show WHO selected WHAT
+// ✅ FIX PROBLEM 2 & 3: Always restart timer on countdown update and use Server's Game ID
+socket.on('countdown_update',function(data){
+    if(data.room && data.room !== currentRoom) return; 
+    if(game.cards.length>0) return; 
+    
+    currentGameId=data.game_id;
+    setTxt('game-id-label', data.game_id || '—');
+    
+    timeLeft=data.time_left;
+    showSelectScreen();
+    startTimer(); // Always restart the timer ticking!
+});
+
 socket.on('player_joined',function(data){
     if(data.room && data.room !== currentRoom) return; 
     game.totalPlayers=data.total_players;
     updatePlayersDisplay();
-    
     if (data.user_id) {
         allPlayers[data.user_id] = {
             user_id: data.user_id,
@@ -495,12 +497,16 @@ socket.on('player_joined',function(data){
     }
 });
 
-// ✅ FIX PROBLEM 4: Late joiners see existing selections from game_state_update
 socket.on('game_state_update',function(data){
     if(data.room && data.room !== currentRoom) return; 
     if(data.total_players){
         game.totalPlayers=data.total_players;
         updatePlayersDisplay();
+    }
+    // ✅ FIX PROBLEM 3: Update Game ID from server on late join
+    if(data.game_id && !currentGameId) {
+        currentGameId = data.game_id;
+        setTxt('game-id-label', currentGameId);
     }
     if (data.players && data.players.length > 0) {
         allPlayers = {};
@@ -537,7 +543,10 @@ socket.on('game_started',function(data){
         return;
     }
     
+    // ✅ FIX PROBLEM 3: Sync Game ID when game starts
     currentGameId=data.game_id;
+    setTxt('s-game-id', currentGameId || '—');
+    
     if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}
     stopAutoGame();
     stopWaitDraw();
@@ -588,7 +597,28 @@ async function loadLeaderboard(){updateBalanceDisplay();var winners=await fetchT
 async function loadWallet(){updateUserInfo();updateBalanceDisplay();var txs=await fetchTransactions();var rows=document.getElementById('wl-tx-rows');if(!txs.length){rows.innerHTML='<div class="empty-row">No transactions yet</div>';return;}rows.innerHTML=txs.map(function(tx){var cls=(tx.type==='deposit'||tx.type==='bingo_win')?'green':'red';var icon=tx.type==='deposit'?'💳':tx.type==='bingo_win'?'🏆':tx.type==='withdraw'?'💸':'🎮';var date=tx.time?tx.time.split('T')[0]:'—';return '<div class="table-row"><span>'+icon+' '+tx.type+'</span><span class="'+cls+'">'+tx.amount+' Br</span><span class="green">Done</span><span class="muted">'+date+'</span></div>';}).join('');}
 
 function generateGameId(){var letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';var chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';var id=letters.charAt(Math.floor(Math.random()*letters.length))+letters.charAt(Math.floor(Math.random()*letters.length));for(var i=0;i<6;i++){id+=chars.charAt(Math.floor(Math.random()*chars.length));}return id;}
-async function checkGameState(){var state=await fetchGameState();if(state&&state.game_running&&state.call_count>0){currentGameId=state.game_id;setTxt('game-id-label',currentGameId||'—');if(state.called_numbers)state.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});if(state.total_players){game.totalPlayers=state.total_players;updatePlayersDisplay();}showWaitScreen();}else if(state&&!state.game_running){timeLeft=state.time_left||35;currentGameId=state.game_id||generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}else{currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showSelectScreen();startTimer();}}
+
+async function checkGameState(){var state=await fetchGameState();
+if(state&&state.game_running&&state.call_count>0){
+    currentGameId=state.game_id;
+    setTxt('game-id-label',currentGameId||'—');
+    if(state.called_numbers)state.called_numbers.forEach(function(n){waitGame.called.add(n);game.called.add(n);});
+    if(state.total_players){game.totalPlayers=state.total_players;updatePlayersDisplay();}
+    showWaitScreen();
+}else if(state&&!state.game_running){
+    timeLeft=state.time_left||35;
+    // ✅ FIX PROBLEM 3: Get Game ID from server
+    currentGameId=state.game_id;
+    setTxt('game-id-label',currentGameId||'—');
+    showSelectScreen();
+    startTimer();
+}else{
+    timeLeft=35;
+    currentGameId=null;
+    setTxt('game-id-label','—');
+    showSelectScreen();
+    startTimer();
+}}
 
 function showWaitScreen(){document.getElementById('select-area').style.display='none';document.getElementById('wait-area').style.display='flex';document.getElementById('home-topbar').style.display='none';startWaitDraw();}
 function showSelectScreen(){document.getElementById('select-area').style.display='';document.getElementById('wait-area').style.display='none';document.getElementById('home-topbar').style.display='flex';stopWaitDraw();}
@@ -627,10 +657,10 @@ function toggleCard(n){
 
 function startTimer(){clearInterval(timerIv);var el=document.getElementById('s-time');el.textContent=timeLeft+'s';el.style.color='var(--yellow)';timerIv=setInterval(function(){timeLeft--;el.textContent=timeLeft+'s';el.style.color=timeLeft<=10?'var(--orange)':'var(--yellow)';if(timeLeft<=0){clearInterval(timerIv);timerIv=null;startGame();}},1000);}
 
-async function startGame(){clearInterval(timerIv);timerIv=null;var cardNums=Array.from(selCards);if(cardNums.length<2){selCards.forEach(function(n){var el=document.getElementById('cc-'+n);if(el)el.classList.remove('selected','disabled');var d=cardDeductMap[n]||{fromPlay:currentStake,fromMain:0};userPlayBalance+=d.fromPlay;userMainBalance+=d.fromMain;delete cardDeductMap[n];});selCards=new Set();cardDeductMap={};setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');game.totalPlayers=0;updatePlayersDisplay();updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);startTimer();return;}var betAmount=cardNums.length*currentStake;var deducted=await deductBet(betAmount);if(!deducted){startTimer();return;}game.cardNums=cardNums;game.gameId=currentGameId;game.cards=cardNums.map(function(){return generateCard();});game.marked=game.cards.map(function(){return new Set([12]);});game.wonLines=game.cards.map(function(){return new Set();});
+async function startGame(){clearInterval(timerIv);timerIv=null;var cardNums=Array.from(selCards);if(cardNums.length<2){selCards.forEach(function(n){var el=document.getElementById('cc-'+n);if(el)el.classList.remove('selected','disabled');var d=cardDeductMap[n]||{fromPlay:currentStake,fromMain:0};userPlayBalance+=d.fromPlay;userMainBalance+=d.fromMain;delete cardDeductMap[n];});selCards=new Set();cardDeductMap={};setTxt('sel-count','0');setTxt('s-win-sel','0');setTxt('s-win-game','0');game.totalPlayers=0;updatePlayersDisplay();updateBalanceDisplay();timeLeft=35;currentGameId=null;setTxt('game-id-label','—');startTimer();return;}var betAmount=cardNums.length*currentStake;var deducted=await deductBet(betAmount);if(!deducted){startTimer();return;}game.cardNums=cardNums;game.gameId=currentGameId;game.cards=cardNums.map(function(){return generateCard();});game.marked=game.cards.map(function(){return new Set([12]);});game.wonLines=game.cards.map(function(){return new Set();});
 game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;setTxt('s-call','0');
 game.winAmount=Math.round(betAmount*0.8);game.totalPlayers=cardNums.length;game.betDeducted=true;winnersThisRound=[];myWinReported=false;recordGamePlayed(game.gameId,cardNums,currentStake);
-updatePlayersDisplay();setTxt('card1-id',cardNums[0]);setTxt('s-game-id',game.gameId);renderCardHeader('card1-header');if(cardNums.length>=2){setTxt('card2-id',cardNums[1]);renderCardHeader('card2-header');document.getElementById('card2-box').style.display='block';document.getElementById('no-card-slot').style.display='none';}else{document.getElementById('card2-box').style.display='none';document.getElementById('no-card-slot').style.display='flex';}
+updatePlayersDisplay();setTxt('card1-id',cardNums[0]);setTxt('s-game-id',game.gameId||'—');renderCardHeader('card1-header');if(cardNums.length>=2){setTxt('card2-id',cardNums[1]);renderCardHeader('card2-header');document.getElementById('card2-box').style.display='block';document.getElementById('no-card-slot').style.display='none';}else{document.getElementById('card2-box').style.display='none';document.getElementById('no-card-slot').style.display='flex';}
 
 if(socket&&socket.connected){socket.emit('request_countdown',{game_id:currentGameId,room:currentRoom});socket.emit('player_ready',{user_id:tgUserId,name:tgUser.first_name||'Player',cards:cardNums,game_id:currentGameId,room:currentRoom});}
 
@@ -696,7 +726,6 @@ function startWinnerCountdown(){var fill=document.getElementById('dist-fill');va
 
 function newRound(){stopAutoGame();stopWaitDraw();serverDrivingBalls=false;clearTimeout(serverDrivingTimer);gamePaused=false;getReadyActive=false;pendingServerBalls=[];document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.remove('show');selCards=new Set();game.betDeducted=false;cardDeductMap={};winnersThisRound=[];myWinReported=false;
 
-// ✅ FIX PROBLEM 6: Clear the player list on new round
 allPlayers = {};
 renderPlayersList(allPlayers);
 
@@ -714,7 +743,13 @@ var wrbEl=document.getElementById('wait-recent-balls');if(wrbEl)wrbEl.innerHTML=
 var wCbBig=document.getElementById('wait-current-big');if(wCbBig){wCbBig.style.background='#333';wCbBig.style.color='#fff';wCbBig.style.boxShadow='none';}
 setTxt('wait-cb-letter','-');setTxt('wait-cb-num','-');
 
-updateBalanceDisplay();timeLeft=35;currentGameId=generateGameId();setTxt('game-id-label',currentGameId);showScreen('screen-home');showSelectScreen();fetchBalance();startTimer();}
+updateBalanceDisplay();timeLeft=35;
+
+// ✅ FIX PROBLEM 3: Reset Game ID to null on new round so server assigns a fresh one
+currentGameId=null;
+setTxt('game-id-label','—');
+
+showScreen('screen-home');showSelectScreen();fetchBalance();startTimer();}
 
 function dismissCancel(){document.getElementById('cancelled-overlay').classList.remove('show');game.betDeducted=false;newRound();}
 
