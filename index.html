@@ -232,16 +232,34 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .tx-table .table-row{grid-template-columns:1.5fr 1fr 1fr 1.5fr;}
 
 .pattern-box{background:var(--bg2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;margin:6px 0 16px;font-size:20px;line-height:1.4;white-space:pre-wrap;overflow-x:auto;font-family:sans-serif;}
+/* Light Mode Styles */
+body.light-mode {
+  --bg:#f0f2f5;--bg2:#ffffff;--bg3:#f8f9fa;
+  --text:#12122a;--muted:rgba(0,0,0,0.5);
+}
+body.light-mode .bottom-nav, body.light-mode .topbar, body.light-mode .select-info, body.light-mode .rules-header, body.light-mode .rules-tabs, body.light-mode .bottom-bar, body.light-mode .card-box, body.light-mode .controls-row, body.light-mode .current-box, body.light-mode .winner-card-box, body.light-mode .prize-box, body.light-mode .profile-header, body.light-mode .wallet-bal-box, body.light-mode .table-box, body.light-mode .rules-support, body.light-mode .pattern-box, body.light-mode .rank-card, body.light-mode .my-rank-box {
+  border-color: rgba(0,0,0,0.12) !important;
+}
+body.light-mode .card-cell {background:#fff; color:#12122a; border-color:rgba(0,0,0,0.2);}
+body.light-mode .num-cell {border-color:rgba(0,0,0,0.15);}
+body.light-mode .cc {border-color:rgba(0,0,0,0.1);}
+body.light-mode .stat-box {border:1px solid rgba(0,0,0,0.05);}
+
+.stake-theme-btn{position:absolute;top:18px;right:110px;background:transparent;border:1.5px solid var(--yellow);color:var(--yellow);padding:6px 12px;border-radius:8px;font-size:14px;cursor:pointer;z-index:10;transition:all .2s;}
+.stake-theme-btn:active{transform:scale(0.95);background:var(--yellow);color:#000;}
 </style>
 </head>
 <body>
 <div class="app">
   
-  <div class="screen" id="screen-stake">
+    <div class="screen" id="screen-stake">
     <div class="stake-container">
       <!-- ADDED: Gear Icon on Top Left -->
       <button class="stake-gear-btn" onclick="navTo('profile')">⚙️</button>
       
+      <!-- NEW: Light/Dark Theme Toggle -->
+      <button class="stake-theme-btn" onclick="toggleTheme()" id="theme-toggle-btn">💡</button>
+
       <!-- Existing Rules Button Untouched -->
       <button class="stake-rules-btn" onclick="openRules()">📜 RULES</button>
       
@@ -634,6 +652,27 @@ function selectStake(stake) {currentStake = stake;currentRoom = String(stake);se
 
 function backToStake() {showScreen('screen-stake');}
 
+function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  var btn = document.getElementById('theme-toggle-btn');
+  if (document.body.classList.contains('light-mode')) {
+    btn.textContent = '🌙';
+    localStorage.setItem('adwa-theme', 'light');
+  } else {
+    btn.textContent = '💡';
+    localStorage.setItem('adwa-theme', 'dark');
+  }
+}
+
+function loadTheme() {
+  var savedTheme = localStorage.getItem('adwa-theme');
+  var btn = document.getElementById('theme-toggle-btn');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-mode');
+    if(btn) btn.textContent = '🌙';
+  }
+}
+
 // ADDED: Function to load Telegram Profile Pic and Username in the Home Screen
 function updateStakeProfile() {
   if (!tgUser) return;
@@ -758,7 +797,7 @@ function toggleSoundWait(){soundOn=!soundOn;var wt=document.getElementById('wait
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
 
-buildGrid();initTelegram();initSocket();fetchBalance().then(function(){updateUserInfo();checkGameState();showScreen('screen-stake');});
+loadTheme();buildGrid();initTelegram();initSocket();fetchBalance().then(function(){updateUserInfo();checkGameState();showScreen('screen-stake');});
 </script>
 </body>
 </html>
