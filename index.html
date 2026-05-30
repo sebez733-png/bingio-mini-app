@@ -753,8 +753,33 @@ function newRound(){stopAutoGame();stopWaitDraw();serverDrivingBalls=false;clear
 
 function dismissCancel(){document.getElementById('cancelled-overlay').classList.remove('show');game.betDeducted=false;newRound();}
 
-function toggleSound(){soundOn=!soundOn;document.getElementById('sound-toggle').classList.toggle('blue-on',soundOn);}
-function toggleSoundWait(){soundOn=!soundOn;var wt=document.getElementById('wait-sound-toggle');if(wt)wt.classList.toggle('blue-on',soundOn);}
+function toggleSound(){
+  soundOn=!soundOn;
+  document.getElementById('sound-toggle').classList.toggle('blue-on',soundOn);
+  if(soundOn){
+    window.speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance('Sound on');
+    u.lang='en-US';
+    u.rate=1;
+    window.speechSynthesis.speak(u);
+  }else{
+    window.speechSynthesis.cancel();
+  }
+}
+function toggleSoundWait(){
+  soundOn=!soundOn;
+  var wt=document.getElementById('wait-sound-toggle');
+  if(wt)wt.classList.toggle('blue-on',soundOn);
+  if(soundOn){
+    window.speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance('Sound on');
+    u.lang='en-US';
+    u.rate=1;
+    window.speechSynthesis.speak(u);
+  }else{
+    window.speechSynthesis.cancel();
+  }
+}
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
 
