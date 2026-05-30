@@ -20,8 +20,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .screen.active{display:flex;}
 
 .stake-container{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;position:relative;}
-.stake-logo{font-size:30px;font-weight:900;color:var(--orange);margin-bottom:5px;letter-spacing:1px;}
-.stake-sub{font-size:14px;color:var(--muted);margin-bottom:35px;}
+.stake-logo{font-size:24px;font-weight:900;color:var(--orange);margin-bottom:4px;letter-spacing:1px;}
+.stake-sub{font-size:13px;color:var(--muted);margin-bottom:30px;}
 .stake-box{width:100%;max-width:280px;}
 .stake-title{font-size:16px;font-weight:800;color:var(--orange);margin-bottom:15px;letter-spacing:0.5px;}
 .stake-btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:20px;font-weight:800;cursor:pointer;margin-bottom:14px;transition:transform 0.15s, box-shadow 0.15s;letter-spacing:0.5px;}
@@ -30,6 +30,17 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .stake-btn.s20{background:var(--blue);color:#fff;box-shadow:0 4px 15px rgba(74,158,255,0.3);}
 .stake-rules-btn{position:absolute;top:18px;right:18px;background:transparent;border:1.5px solid var(--orange);color:var(--orange);padding:6px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:0.5px;z-index:10;transition:all .2s;}
 .stake-rules-btn:active{transform:scale(0.95);background:var(--orange);color:#000;}
+
+/* --- NEW: Gear Button, Profile Top Section --- */
+.stake-gear-btn{position:absolute;top:18px;left:18px;background:transparent;border:1.5px solid var(--muted);color:var(--muted);padding:6px 12px;border-radius:8px;font-size:14px;cursor:pointer;z-index:10;transition:all .2s;}
+.stake-gear-btn:active{transform:scale(0.95);background:var(--muted);color:var(--bg);}
+
+.stake-profile-top{display:flex;flex-direction:column;align-items:center;margin-bottom:10px;margin-top:40px;}
+.stake-avatar-wrap{width:72px;height:72px;margin-bottom:6px;position:relative;}
+.stake-avatar-circle{width:72px;height:72px;border-radius:50%;border:2.5px solid var(--orange);object-fit:cover;}
+.stake-avatar-letter{background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;width:72px;height:72px;border-radius:50%;border:2.5px solid var(--orange);}
+.stake-username-display{font-size:14px;font-weight:700;color:var(--text);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* --- END NEW --- */
 
 /* Rules Screen Styles */
 .rules-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column;max-width:390px;margin:0 auto;}
@@ -228,7 +239,22 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
   
   <div class="screen" id="screen-stake">
     <div class="stake-container">
+      <!-- ADDED: Gear Icon on Top Left -->
+      <button class="stake-gear-btn" onclick="navTo('profile')">⚙️</button>
+      
+      <!-- Existing Rules Button Untouched -->
       <button class="stake-rules-btn" onclick="openRules()">📜 RULES</button>
+      
+      <!-- ADDED: Center Profile Section -->
+      <div class="stake-profile-top">
+        <div class="stake-avatar-wrap">
+          <img id="stake-avatar-img" src="" class="stake-avatar-circle" style="display:none;">
+          <div id="stake-avatar-letter" class="stake-avatar-letter">?</div>
+        </div>
+        <div id="stake-username" class="stake-username-display"></div>
+      </div>
+
+      <!-- Minimized & Shifted Down Title -->
       <div class="stake-logo">🇪🇹 ADWA BINGO</div>
       <div class="stake-sub">Choose Your Stake & Win Big!</div>
       <div class="stake-box">
@@ -608,7 +634,34 @@ function selectStake(stake) {currentStake = stake;currentRoom = String(stake);se
 
 function backToStake() {showScreen('screen-stake');}
 
-function initTelegram(){try{if(window.Telegram&&window.Telegram.WebApp){var wa=window.Telegram.WebApp;wa.ready();wa.expand();if(wa.initDataUnsafe&&wa.initDataUnsafe.user){tgUser=wa.initDataUnsafe.user;tgUserId=tgUser.id;updateUserName(tgUser.first_name||'');}}}catch(e){}}
+// ADDED: Function to load Telegram Profile Pic and Username in the Home Screen
+function updateStakeProfile() {
+  if (!tgUser) return;
+  var imgEl = document.getElementById('stake-avatar-img');
+  var letterEl = document.getElementById('stake-avatar-letter');
+  var nameEl = document.getElementById('stake-username');
+
+  if (tgUser.photo_url) {
+    imgEl.src = tgUser.photo_url;
+    imgEl.style.display = 'block';
+    letterEl.style.display = 'none';
+  } else {
+    var initial = (tgUser.first_name || '?').charAt(0).toUpperCase();
+    letterEl.textContent = initial;
+    imgEl.style.display = 'none';
+    letterEl.style.display = 'flex';
+  }
+
+  if (tgUser.username) {
+    nameEl.textContent = '@' + tgUser.username;
+    nameEl.style.display = 'block';
+  } else {
+    nameEl.textContent = '';
+    nameEl.style.display = 'none';
+  }
+}
+
+function initTelegram(){try{if(window.Telegram&&window.Telegram.WebApp){var wa=window.Telegram.WebApp;wa.ready();wa.expand();if(wa.initDataUnsafe&&wa.initDataUnsafe.user){tgUser=wa.initDataUnsafe.user;tgUserId=tgUser.id;updateUserName(tgUser.first_name||'');updateStakeProfile();}}}catch(e){}}
 async function updateUserName(firstName){if(!tgUserId||!firstName||!apiAvailable)return;try{await fetch(API_BASE+'/api/update_name',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:tgUserId,first_name:firstName})});}catch(e){}}
 
 function initSocket(){try{socket=io(API_BASE,{transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000,reconnectionAttempts:10,timeout:5000});socket.on('connect',function(){socket.emit('join_room', {room: currentRoom});});socket.on('disconnect',function(){serverDrivingBalls=false;if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();});socket.on('max_winners_updated',function(data){if(data.room && data.room !== currentRoom) return; maxWinners=data.max||1;});socket.on('game_paused',function(data){if(data.room && data.room !== currentRoom) return; gamePaused=data.paused;var overlay=document.getElementById('paused-overlay');if(gamePaused){overlay.classList.add('show');stopAutoGame();}else{overlay.classList.remove('show');if(game.cards.length>0&&!game.autoIv&&!gamePaused&&!getReadyActive)startAutoGame();}});socket.on('game_cancelled',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();gamePaused=false;getReadyActive=false;document.getElementById('paused-overlay').classList.remove('show');document.getElementById('cancelled-overlay').classList.add('show');});socket.on('countdown_update',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length>0)return; currentGameId=data.game_id;setTxt('game-id-label',data.game_id);timeLeft=data.time_left;showSelectScreen();if(!timerIv)startTimer();});socket.on('player_joined',function(data){if(data.room && data.room !== currentRoom) return; game.totalPlayers=data.total_players;updatePlayersDisplay();});socket.on('game_state_update',function(data){if(data.room && data.room !== currentRoom) return; if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}});socket.on('ball_called',function(data){if(data.room && data.room !== currentRoom) return; var n=data.number;if(!n)return;markServerDriving();if(getReadyActive){pendingServerBalls.push(n);return;}processBall(n);});socket.on('game_started',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length > 0 && data.game_id === game.gameId) {if(data.total_players) {game.totalPlayers = data.total_players;updatePlayersDisplay();}return;}currentGameId=data.game_id;if(data.total_players){game.totalPlayers=data.total_players;updatePlayersDisplay();}stopAutoGame();stopWaitDraw();gamePaused=false;game.called=new Set();game.current=null;game.recentBalls=[];game.callCount=0;waitGame.called=new Set();waitGame.current=null;waitGame.recentBalls=[];waitGame.callCount=0;setTxt('s-call', '0');setTxt('w-call-top', '0');var rbEl=document.getElementById('recent-balls');if(rbEl)rbEl.innerHTML='';var wrbEl=document.getElementById('wait-recent-balls');if(wrbEl)wrbEl.innerHTML='';winnersThisRound=[];myWinReported=false;if(game.cards.length>0){showScreen('screen-game');updatePlayersDisplay();renderNumGrid();renderRecentBalls();renderCurrentBall();renderAllCards();if(!getReadyActive) startAutoGame();}else{showScreen('screen-home');showWaitScreen();}});socket.on('winner_found',function(data){if(data.room && data.room !== currentRoom) return; if(game.cards.length===0)showObserverWinner(data);});socket.on('game_ended',function(data){if(data.room && data.room !== currentRoom) return; stopAutoGame();stopWaitDraw();if(game.cards.length===0)showObserverWinner(data);});}catch(e){}}
