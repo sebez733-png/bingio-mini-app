@@ -739,16 +739,14 @@ function speakNumber(n){
   window.speechSynthesis.cancel();
   window.speechSynthesis.resume();
   var voices=window.speechSynthesis.getVoices();
-  var u1=new SpeechSynthesisUtterance(L);
-  u1.lang='en-US';
-  u1.rate=0.85;
-  var u2=new SpeechSynthesisUtterance(amWord);
+  var text=L+'. '+amWord;
+  var u=new SpeechSynthesisUtterance(text);
   var amVoice=voices.find(function(v){return v.lang&&v.lang.startsWith('am');});
-  if(amVoice)u2.voice=amVoice;
-  u2.lang='am-ET';
-  u2.rate=0.85;
-  window.speechSynthesis.speak(u1);
-  window.speechSynthesis.speak(u2);
+  if(amVoice)u.voice=amVoice;
+  u.lang='am-ET';
+  u.rate=0.9;
+  u.volume=1;
+  window.speechSynthesis.speak(u);
 }
 
 function tapCard(ci,idx){if(idx===12)return;if(game.marked[ci].has(idx))game.marked[ci].delete(idx);else game.marked[ci].add(idx);checkWin(ci);renderCard(ci);}
