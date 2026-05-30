@@ -733,21 +733,7 @@ function renderCurrentBall(){if(!game.current)return;var n=game.current,L=letter
 var voicesLoaded=[];
 function loadVoices(){voicesLoaded=window.speechSynthesis?window.speechSynthesis.getVoices():[];}
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=loadVoices;loadVoices();}
-function speakNumber(n){
-  if(!soundOn||!window.speechSynthesis)return;
-  var L=letterFor(n),amWord=AM_NUMBERS[n]||String(n);
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.resume();
-  var voices=window.speechSynthesis.getVoices();
-  var text=L+'. '+amWord;
-  var u=new SpeechSynthesisUtterance(text);
-  var amVoice=voices.find(function(v){return v.lang&&v.lang.startsWith('am');});
-  if(amVoice)u.voice=amVoice;
-  u.lang='am-ET';
-  u.rate=0.9;
-  u.volume=1;
-  window.speechSynthesis.speak(u);
-}
+function speakNumber(n){if(!soundOn||!window.speechSynthesis)return;var L=letterFor(n),amWord=AM_NUMBERS[n]||String(n);window.speechSynthesis.cancel();var u1=new SpeechSynthesisUtterance(L);u1.lang='en-US';u1.rate=0.85;var u2=new SpeechSynthesisUtterance(amWord);var amVoice=voicesLoaded.find(function(v){return v.lang&&v.lang.startsWith('am');});if(amVoice)u2.voice=amVoice;u2.lang='am-ET';u2.rate=0.85;window.speechSynthesis.speak(u1);window.speechSynthesis.speak(u2);}
 
 function tapCard(ci,idx){if(idx===12)return;if(game.marked[ci].has(idx))game.marked[ci].delete(idx);else game.marked[ci].add(idx);checkWin(ci);renderCard(ci);}
 
@@ -767,33 +753,8 @@ function newRound(){stopAutoGame();stopWaitDraw();serverDrivingBalls=false;clear
 
 function dismissCancel(){document.getElementById('cancelled-overlay').classList.remove('show');game.betDeducted=false;newRound();}
 
-function toggleSound(){
-  soundOn=!soundOn;
-  document.getElementById('sound-toggle').classList.toggle('blue-on',soundOn);
-  if(soundOn){
-    window.speechSynthesis.cancel();
-    var u=new SpeechSynthesisUtterance('Sound on');
-    u.lang='en-US';
-    u.rate=1;
-    window.speechSynthesis.speak(u);
-  }else{
-    window.speechSynthesis.cancel();
-  }
-}
-function toggleSoundWait(){
-  soundOn=!soundOn;
-  var wt=document.getElementById('wait-sound-toggle');
-  if(wt)wt.classList.toggle('blue-on',soundOn);
-  if(soundOn){
-    window.speechSynthesis.cancel();
-    var u=new SpeechSynthesisUtterance('Sound on');
-    u.lang='en-US';
-    u.rate=1;
-    window.speechSynthesis.speak(u);
-  }else{
-    window.speechSynthesis.cancel();
-  }
-}
+function toggleSound(){soundOn=!soundOn;document.getElementById('sound-toggle').classList.toggle('blue-on',soundOn);}
+function toggleSoundWait(){soundOn=!soundOn;var wt=document.getElementById('wait-sound-toggle');if(wt)wt.classList.toggle('blue-on',soundOn);}
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
 
