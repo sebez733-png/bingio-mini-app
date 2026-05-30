@@ -217,6 +217,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .wallet-sub span{color:var(--text);font-weight:600;}
 .tx-table .table-head{grid-template-columns:1.5fr 1fr 1fr 1.5fr;}
 .tx-table .table-row{grid-template-columns:1.5fr 1fr 1fr 1.5fr;}
+.tx-table .table-head{grid-template-columns:1.5fr 1fr 1fr 1.5fr;}
+.tx-table .table-row{grid-template-columns:1.5fr 1fr 1fr 1.5fr;}
+
+.pattern-box{background:var(--bg2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;margin:6px 0 16px;font-size:20px;line-height:1.4;white-space:pre-wrap;overflow-x:auto;font-family:sans-serif;}
 </style>
 </head>
 <body>
@@ -455,11 +459,143 @@ function getTermsAm() {
 }
 
 function getInfoEn() {
-  return `<div class="rules-support">☎️ <strong>Support</strong><br>If you have any problems, contact <a href="https://t.me/one_day_82" target="_blank">@one_day_82</a></div><h2>🎮 How to play</h2><p><span class="rule-num">1</span> Click "Open Game"</p><p><span class="rule-num">2</span> Select your Bingo cards</p><p><span class="rule-num">3</span> Follow along as numbers are called and match them on your card</p><p><span class="rule-num">4</span> When you complete a winning pattern, shout "BINGO"</p><p style="color:var(--green); margin-top:8px;">If you turn on Automatic, you don't need to do steps 3 and 4.</p><h2>🏆 Winning Patterns</h2><span class="pattern-label">Any Row ⥨</span><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-e"></div><div class="p-g"></div><div class="p-g"></div><div class="p-g"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div></div><span class="pattern-label">Any Column ⥯</span><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div></div><span class="pattern-label">Any Diagonal ⤢⤡</span><div class="pattern-grid" style="margin-right:10px;"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div></div><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div></div><span class="pattern-label">Four Corners ⸬</span><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div></div><h2>💰 Commands</h2><div class="rules-cmd"><code>/start</code> <span>Main menu / ዋና ማውጫ</span></div><div class="rules-cmd"><code>/lang</code> <span>Change language / ቋንቋ ይቀይሩ</span></div><div class="rules-cmd"><code>/play</code> <span>Open Game / ይጫወቱ</span></div><div class="rules-cmd"><code>/deposit</code> <span>Deposit / ያስገቡ</span></div><div class="rules-cmd"><code>/balance</code> <span>Balance / ሂሳብ</span></div><div class="rules-cmd"><code>/withdraw</code> <span>Withdraw / ያውጡ</span></div><div class="rules-cmd"><code>/history</code> <span>History / ታሪክ</span></div><div class="rules-cmd"><code>/profile</code> <span>Profile / መገለጫ</span></div><div class="rules-cmd"><code>/support</code> <span>Support / ድጋፍ</span></div><div class="rules-cmd"><code>/invite</code> <span>Invite Friends / ጓደኛ ይጋብዙ</span></div><div class="rules-cmd"><code>/agent</code> <span>Agent Panel / ወኪል</span></div><div class="rules-cmd"><code>/transfer</code> <span>Transfer / ይላኩ</span></div><div class="rules-cmd"><code>/info</code> <span>Info & Rules / መረጃ</span></div><p style="text-align:center; margin-top:20px; font-size:14px; color:var(--yellow); font-weight:700;">Good luck! 🍀</p>`;
+  return `
+<div class="rules-support">☎️ <strong>Support</strong><br>If you have any problems, contact <a href="https://t.me/one_day_82" target="_blank">@one_day_82</a></div>
+
+<h2>🎮 How to play</h2>
+<p><span class="rule-num">1</span> Click "Open Game"</p>
+<p><span class="rule-num">2</span> Select your Bingo cards</p>
+<p><span class="rule-num">3</span> Follow along as numbers are called and match them on your card</p>
+<p><span class="rule-num">4</span> When you complete a winning pattern, shout "BINGO"</p>
+<p style="color:var(--green); margin-top:8px;">If you turn on Automatic, you don't need to do steps 3 and 4.</p>
+
+<h2>🏆 Winning Patterns</h2>
+
+<span class="pattern-label">Any row ⥨</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 🟩 🟩 🟩 🟩
+⬜ ⬜ ⬜ ⬜ ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ ⬜ ⬜ ⬜ ⬜
+⬜ ⬜ ⬜ ⬜ ⬜</div>
+
+<span class="pattern-label">Any column ⥯</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ❎ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜</div>
+
+<span class="pattern-label">Any diagonal ⤢⤡</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 ⬜ ⬜ ⬜ ⬜
+⬜ 🟩 ⬜ ⬜ ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ ⬜ ⬜ 🟩 ⬜
+⬜ ⬜ ⬜ ⬜ 🟩</div>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+⬜ ⬜ ⬜ ⬜ 🟩
+⬜ ⬜ ⬜ 🟩 ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ 🟩 ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜</div>
+
+<span class="pattern-label">Four corners ⸬</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 ⬜ ⬜ ⬜ 🟩
+⬜ ⬜ ⬜ ⬜ ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ 🟩</div>
+
+<h2>💰 Commands</h2>
+<div class="rules-cmd"><code>/start</code> <span>Main menu / ዋና ማውጫ</span></div>
+<div class="rules-cmd"><code>/lang</code> <span>Change language / ቋንቋ ይቀይሩ</span></div>
+<div class="rules-cmd"><code>/play</code> <span>Open Game / ይጫወቱ</span></div>
+<div class="rules-cmd"><code>/deposit</code> <span>Deposit / ያስገቡ</span></div>
+<div class="rules-cmd"><code>/balance</code> <span>Balance / ሂሳብ</span></div>
+<div class="rules-cmd"><code>/withdraw</code> <span>Withdraw / ያውጡ</span></div>
+<div class="rules-cmd"><code>/history</code> <span>History / ታሪክ</span></div>
+<div class="rules-cmd"><code>/profile</code> <span>Profile / መገለጫ</span></div>
+<div class="rules-cmd"><code>/support</code> <span>Support / ድጋፍ</span></div>
+<div class="rules-cmd"><code>/invite</code> <span>Invite Friends / ጓደኛ ይጋብዙ</span></div>
+<div class="rules-cmd"><code>/agent</code> <span>Agent Panel / ወኪል</span></div>
+<div class="rules-cmd"><code>/transfer</code> <span>Transfer / ይላኩ</span></div>
+<div class="rules-cmd"><code>/info</code> <span>Info & Rules / መረጃ</span></div>
+
+<p style="text-align:center; margin-top:20px; font-size:14px; color:var(--yellow); font-weight:700;">Good luck! 🍀</p>
+  `;
 }
 
 function getInfoAm() {
-  return `<div class="rules-support">☎️ <strong>Support (ድጋፍ)</strong><br>ችግር ካጋጠመዎት <a href="https://t.me/one_day_82" target="_blank">@one_day_82</a> ን ያግኙ</div><h2>🎮 እንዴት እንደሚጫወቱ</h2><p><span class="rule-num">1</span> "Play Now/ይጫወቱ" የሚለውን ይጫኑ</p><p><span class="rule-num">2</span> በምርጫ ጊዜ የቢንጎ ካርዶችዎን ይምረጡ</p><p><span class="rule-num">3</span> ቁጥሮች ሲጠሩ እየተከታተሉ ካርዶችዎ ውስጥ ካሉ ያጥቁሩ</p><p><span class="rule-num">4</span> ቢያንስ አንድ የማሸነፊያ ንድፍ ሲያጠናቅቁ "BINGO" ይበሉ</p><p style="color:var(--green); margin-top:8px;">Automatic ካበሩ 3 እና 4ን ማድረግ አይጠበቅብዎትም።</p><h2>🏆 የማሸነፊያ ንድፎች</h2><span class="pattern-label">ማንኛውንም ረድፍ ⥨</span><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-e"></div><div class="p-g"></div><div class="p-g"></div><div class="p-g"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div></div><span class="pattern-label">ማንኛውንም አምድ ⥯</span><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div></div><span class="pattern-label">ማንኛውንም ሰያፍ ⤢⤡</span><div class="pattern-grid" style="margin-right:10px;"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div></div><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div></div><span class="pattern-label">አራቱንም ማዕዘኖች ⸬</span><div class="pattern-grid"><div class="p-h B">B</div><div class="p-h I">I</div><div class="p-h N">N</div><div class="p-h G">G</div><div class="p-h O">O</div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-x"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div><div class="p-e"></div><div class="p-e"></div><div class="p-e"></div><div class="p-g"></div></div><h2>💰 ትእዛዞች (Commands)</h2><div class="rules-cmd"><code>/start</code> <span>Main menu / ዋና ማውጫ</span></div><div class="rules-cmd"><code>/lang</code> <span>Change language / ቋንቋ ይቀይሩ</span></div><div class="rules-cmd"><code>/play</code> <span>Open Game / ይጫወቱ</span></div><div class="rules-cmd"><code>/deposit</code> <span>Deposit / ያስገቡ</span></div><div class="rules-cmd"><code>/balance</code> <span>Balance / ሂሳብ</span></div><div class="rules-cmd"><code>/withdraw</code> <span>Withdraw / ያውጡ</span></div><div class="rules-cmd"><code>/history</code> <span>History / ታሪክ</span></div><div class="rules-cmd"><code>/profile</code> <span>Profile / መገለጫ</span></div><div class="rules-cmd"><code>/support</code> <span>Support / ድጋፍ</span></div><div class="rules-cmd"><code>/invite</code> <span>Invite Friends / ጓደኛ ይጋብዙ</span></div><div class="rules-cmd"><code>/agent</code> <span>Agent Panel / ወኪል</span></div><div class="rules-cmd"><code>/transfer</code> <span>Transfer / ይላኩ</span></div><div class="rules-cmd"><code>/info</code> <span>Info & Rules / መረጃ</span></div><p style="text-align:center; margin-top:20px; font-size:14px; color:var(--yellow); font-weight:700;">መልካም ዕድል ይገጥምዎ! 🍀</p>`;
+  return `
+<div class="rules-support">☎️ <strong>Support (ድጋፍ)</strong><br>ችግር ካጋጠመዎት <a href="https://t.me/one_day_82" target="_blank">@one_day_82</a> ን ያግኙ</div>
+
+<h2>🎮 እንዴት እንደሚጫወቱ</h2>
+<p><span class="rule-num">1</span> "Play Now/ይጫወቱ" የሚለውን ይጫኑ</p>
+<p><span class="rule-num">2</span> በምርጫ ጊዜ የቢንጎ ካርዶችዎን ይምረጡ</p>
+<p><span class="rule-num">3</span> ቁጥሮች ሲጠሩ እየተከታተሉ ካርዶችዎ ውስጥ ካሉ ያጥቁሩ</p>
+<p><span class="rule-num">4</span> ቢያንስ አንድ የማሸነፊያ ንድፍ ሲያጠናቅቁ "BINGO" ይበሉ</p>
+<p style="color:var(--green); margin-top:8px;">Automatic ካበሩ 3 እና 4ን ማድረግ አይጠበቅብዎትም።</p>
+
+<h2>🏆 የማሸነፊያ ንድፎች</h2>
+
+<span class="pattern-label">Any row(ማንኛውንም ረድፍ) ⥨</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 🟩 🟩 🟩 🟩
+⬜ ⬜ ⬜ ⬜ ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ ⬜ ⬜ ⬜ ⬜
+⬜ ⬜ ⬜ ⬜ ⬜</div>
+
+<span class="pattern-label">Any column(ማንኛውንም አምድ) ⥯</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ❎ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜</div>
+
+<span class="pattern-label">Any diagonal(ማንኛውንም ሰያፍ) ⤢⤡</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 ⬜ ⬜ ⬜ ⬜
+⬜ 🟩 ⬜ ⬜ ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ ⬜ ⬜ 🟩 ⬜
+⬜ ⬜ ⬜ ⬜ 🟩</div>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+⬜ ⬜ ⬜ ⬜ 🟩
+⬜ ⬜ ⬜ 🟩 ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ 🟩 ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ ⬜</div>
+
+<span class="pattern-label">Four corners(አራቱንም ማዕዘኖች) ⸬</span>
+<div class="pattern-box">🟢 🟡 🟠 🔴 🟣
+🟩 ⬜ ⬜ ⬜ 🟩
+⬜ ⬜ ⬜ ⬜ ⬜
+⬜ ⬜ ❎ ⬜ ⬜
+⬜ ⬜ ⬜ ⬜ ⬜
+🟩 ⬜ ⬜ ⬜ 🟩</div>
+
+<h2>💰 ትእዛዞች (Commands)</h2>
+<div class="rules-cmd"><code>/start</code> <span>Main menu / ዋና ማውጫ</span></div>
+<div class="rules-cmd"><code>/lang</code> <span>Change language / ቋንቋ ይቀይሩ</span></div>
+<div class="rules-cmd"><code>/play</code> <span>Open Game / ይጫወቱ</span></div>
+<div class="rules-cmd"><code>/deposit</code> <span>Deposit / ያስገቡ</span></div>
+<div class="rules-cmd"><code>/balance</code> <span>Balance / ሂሳብ</span></div>
+<div class="rules-cmd"><code>/withdraw</code> <span>Withdraw / ያውጡ</span></div>
+<div class="rules-cmd"><code>/history</code> <span>History / ታሪክ</span></div>
+<div class="rules-cmd"><code>/profile</code> <span>Profile / መገለጫ</span></div>
+<div class="rules-cmd"><code>/support</code> <span>Support / ድጋፍ</span></div>
+<div class="rules-cmd"><code>/invite</code> <span>Invite Friends / ጓደኛ ይጋብዙ</span></div>
+<div class="rules-cmd"><code>/agent</code> <span>Agent Panel / ወኪል</span></div>
+<div class="rules-cmd"><code>/transfer</code> <span>Transfer / ይላኩ</span></div>
+<div class="rules-cmd"><code>/info</code> <span>Info & Rules / መረጃ</span></div>
+
+<p style="text-align:center; margin-top:20px; font-size:14px; color:var(--yellow); font-weight:700;">መልካም ዕድል ይገጥምዎ! 🍀</p>
+  `;
 }
 
 function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
