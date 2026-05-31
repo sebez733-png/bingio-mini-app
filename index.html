@@ -404,7 +404,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       <div class="next-label">Next round starts in</div>
       <div class="next-count" id="next-count">10</div>
     </div>
-    <div class="screen" id="screen-profile">
+  </div>
+
+  <div class="screen" id="screen-profile">
     <div class="topbar">
       <div class="stat-box"><div class="stat-label">MAIN</div><div class="stat-val green" id="p-main">—</div></div>
       <div class="stat-box"><div class="stat-label">PLAY</div><div class="stat-val green" id="p-play">—</div></div>
@@ -529,16 +531,13 @@ function getTermsAm() {
 function getInfoEn() {
   return `
 <div class="rules-support">☎️ <strong>Support</strong><br>If you have any problems, contact <a href="https://t.me/one_day_82" target="_blank">@one_day_82</a></div>
-
 <h2>🎮 How to play</h2>
 <p><span class="rule-num">1</span> Click "Open Game"</p>
 <p><span class="rule-num">2</span> Select your Bingo cards</p>
 <p><span class="rule-num">3</span> Follow along as numbers are called and match them on your card</p>
 <p><span class="rule-num">4</span> When you complete a winning pattern, shout "BINGO"</p>
 <p style="color:var(--green); margin-top:8px;">If you turn on Automatic, you don't need to do steps 3 and 4.</p>
-
 <h2>🏆 Winning Patterns</h2>
-
 <span class="pattern-label">Any row ⥨</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 🟩 🟩 🟩 🟩
@@ -546,7 +545,6 @@ function getInfoEn() {
 ⬜ ⬜ ❎ ⬜ ⬜
 ⬜ ⬜ ⬜ ⬜ ⬜
 ⬜ ⬜ ⬜ ⬜ ⬜</div>
-
 <span class="pattern-label">Any column ⥯</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 ⬜ ⬜ ⬜ ⬜
@@ -554,7 +552,6 @@ function getInfoEn() {
 🟩 ⬜ ❎ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ ⬜</div>
-
 <span class="pattern-label">Any diagonal ⤢⤡</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 ⬜ ⬜ ⬜ ⬜
@@ -568,7 +565,6 @@ function getInfoEn() {
 ⬜ ⬜ ❎ ⬜ ⬜
 ⬜ 🟩 ⬜ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ ⬜</div>
-
 <span class="pattern-label">Four corners ⸬</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 ⬜ ⬜ ⬜ 🟩
@@ -576,7 +572,6 @@ function getInfoEn() {
 ⬜ ⬜ ❎ ⬜ ⬜
 ⬜ ⬜ ⬜ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ 🟩</div>
-
 <h2>💰 Commands</h2>
 <div class="rules-cmd"><code>/start</code> <span>Main menu / ዋና ማውጫ</span></div>
 <div class="rules-cmd"><code>/lang</code> <span>Change language / ቋንቋ ይቀይሩ</span></div>
@@ -591,7 +586,6 @@ function getInfoEn() {
 <div class="rules-cmd"><code>/agent</code> <span>Agent Panel / ወኪል</span></div>
 <div class="rules-cmd"><code>/transfer</code> <span>Transfer / ይላኩ</span></div>
 <div class="rules-cmd"><code>/info</code> <span>Info & Rules / መረጃ</span></div>
-
 <p style="text-align:center; margin-top:20px; font-size:14px; color:var(--yellow); font-weight:700;">Good luck! 🍀</p>
   `;
 }
@@ -599,16 +593,13 @@ function getInfoEn() {
 function getInfoAm() {
   return `
 <div class="rules-support">☎️ <strong>Support (ድጋፍ)</strong><br>ችግር ካጋጠመዎት <a href="https://t.me/one_day_82" target="_blank">@one_day_82</a> ን ያግኙ</div>
-
 <h2>🎮 እንዴት እንደሚጫወቱ</h2>
 <p><span class="rule-num">1</span> "Play Now/ይጫወቱ" የሚለውን ይጫኑ</p>
 <p><span class="rule-num">2</span> በምርጫ ጊዜ የቢንጎ ካርዶችዎን ይምረጡ</p>
 <p><span class="rule-num">3</span> ቁጥሮች ሲጠሩ እየተከታተሉ ካርዶችዎ ውስጥ ካሉ ያጥቁሩ</p>
 <p><span class="rule-num">4</span> ቢያንስ አንድ የማሸነፊያ ንድፍ ሲያጠናቅቁ "BINGO" ይበሉ</p>
 <p style="color:var(--green); margin-top:8px;">Automatic ካበሩ 3 እና 4ን ማድረግ አይጠበቅብዎትም።</p>
-
 <h2>🏆 የማሸነፊያ ንድፎች</h2>
-
 <span class="pattern-label">Any row(ማንኛውንም ረድፍ) ⥨</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 🟩 🟩 🟩 🟩
@@ -616,7 +607,6 @@ function getInfoAm() {
 ⬜ ⬜ ❎ ⬜ ⬜
 ⬜ ⬜ ⬜ ⬜ ⬜
 ⬜ ⬜ ⬜ ⬜ ⬜</div>
-
 <span class="pattern-label">Any column(ማንኛውንም አምድ) ⥯</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 ⬜ ⬜ ⬜ ⬜
@@ -624,7 +614,6 @@ function getInfoAm() {
 🟩 ⬜ ❎ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ ⬜</div>
-
 <span class="pattern-label">Any diagonal(ማንኛውንም ሰያፍ) ⤢⤡</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 ⬜ ⬜ ⬜ ⬜
@@ -638,7 +627,6 @@ function getInfoAm() {
 ⬜ ⬜ ❎ ⬜ ⬜
 ⬜ 🟩 ⬜ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ ⬜</div>
-
 <span class="pattern-label">Four corners(አራቱንም ማዕዘኖች) ⸬</span>
 <div class="pattern-box">🟢 🟡 🟠 🔴 🟣
 🟩 ⬜ ⬜ ⬜ 🟩
@@ -646,7 +634,6 @@ function getInfoAm() {
 ⬜ ⬜ ❎ ⬜ ⬜
 ⬜ ⬜ ⬜ ⬜ ⬜
 🟩 ⬜ ⬜ ⬜ 🟩</div>
-
 <h2>💰 ትእዛዞች (Commands)</h2>
 <div class="rules-cmd"><code>/start</code> <span>Main menu / ዋና ማውጫ</span></div>
 <div class="rules-cmd"><code>/lang</code> <span>Change language / ቋንቋ ይቀይሩ</span></div>
@@ -661,7 +648,6 @@ function getInfoAm() {
 <div class="rules-cmd"><code>/agent</code> <span>Agent Panel / ወኪል</span></div>
 <div class="rules-cmd"><code>/transfer</code> <span>Transfer / ይላኩ</span></div>
 <div class="rules-cmd"><code>/info</code> <span>Info & Rules / መረጃ</span></div>
-
 <p style="text-align:center; margin-top:20px; font-size:14px; color:var(--yellow); font-weight:700;">መልካም ዕድል ይገጥምዎ! 🍀</p>
   `;
 }
