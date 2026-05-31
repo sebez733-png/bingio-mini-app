@@ -19,7 +19,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .screen{display:none;flex:1;flex-direction:column;}
 .screen.active{display:flex;}
 
-.stake-container{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;position:relative;}
+.stake-container{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 24px 24px;text-align:center;position:relative;}
 .stake-logo{font-size:24px;font-weight:900;color:var(--orange);margin-bottom:4px;letter-spacing:1px;}
 .stake-sub{font-size:13px;color:var(--muted);margin-bottom:30px;}
 .stake-box{width:100%;max-width:280px;}
@@ -31,16 +31,20 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .stake-rules-btn{position:absolute;top:18px;right:18px;background:transparent;border:1.5px solid var(--orange);color:var(--orange);padding:6px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:0.5px;z-index:10;transition:all .2s;}
 .stake-rules-btn:active{transform:scale(0.95);background:var(--orange);color:#000;}
 
-/* --- NEW: Gear Button, Profile Top Section --- */
-.stake-gear-btn{position:absolute;top:18px;left:18px;background:transparent;border:1.5px solid var(--muted);color:var(--muted);padding:6px 12px;border-radius:8px;font-size:14px;cursor:pointer;z-index:10;transition:all .2s;}
-.stake-gear-btn:active{transform:scale(0.95);background:var(--muted);color:var(--bg);}
+/* --- MODIFIED: Top Profile replacing Gear --- */
+.stake-top-profile{position:absolute;top:18px;left:18px;display:flex;align-items:center;gap:8px;z-index:10;cursor:pointer;transition:all .2s;}
+.stake-top-profile:active{transform:scale(0.95);}
+.stake-top-avatar{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--orange);background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;overflow:hidden;position:relative;}
+.stake-top-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.stake-top-info{display:flex;flex-direction:column;}
+.stake-top-title{font-size:13px;font-weight:800;color:var(--orange);letter-spacing:0.5px;}
+.stake-top-username{font-size:11px;color:var(--text);font-weight:600;}
 
 .stake-profile-top{display:flex;flex-direction:column;align-items:center;margin-bottom:10px;margin-top:40px;}
 .stake-avatar-wrap{width:72px;height:72px;margin-bottom:6px;position:relative;}
 .stake-avatar-circle{width:72px;height:72px;border-radius:50%;border:2.5px solid var(--orange);object-fit:cover;}
 .stake-avatar-letter{background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;width:72px;height:72px;border-radius:50%;border:2.5px solid var(--orange);}
 .stake-username-display{font-size:14px;font-weight:700;color:var(--text);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* --- END NEW --- */
 
 /* Rules Screen Styles */
 .rules-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column;max-width:390px;margin:0 auto;}
@@ -182,11 +186,17 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
 .next-label{font-size:12px;color:var(--muted);}
 .next-count{font-size:20px;font-weight:700;color:var(--orange);}
 .page-scroll{flex:1;overflow-y:auto;padding:12px;}
+
+/* --- MODIFIED: Profile & Wallet Avatar/Username --- */
 .profile-header{background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
-.profile-avatar{width:54px;height:54px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;}
+.profile-avatar{width:54px;height:54px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;overflow:hidden;position:relative;}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0;}
+.profile-avatar .avatar-letter{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;background:var(--blue);border-radius:50%;}
 .profile-name{font-size:17px;font-weight:700;}
 .profile-id{font-size:11px;color:var(--muted);margin-top:2px;}
+.profile-username{font-size:11px;color:var(--blue);margin-top:2px;font-weight:600;}
 .profile-bal{font-size:13px;color:var(--green);margin-top:4px;font-weight:600;}
+
 .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .stat-card{background:var(--bg2);border-radius:10px;padding:12px;text-align:center;}
 .stat-card .sv{font-size:20px;font-weight:800;color:var(--yellow);}
@@ -239,13 +249,22 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
   
   <div class="screen" id="screen-stake">
     <div class="stake-container">
-      <!-- ADDED: Gear Icon on Top Left -->
-      <button class="stake-gear-btn" onclick="navTo('profile')">⚙️</button>
+      <!-- MODIFIED: Replaced Gear Icon with Profile Pic + Title + Username -->
+      <div class="stake-top-profile" onclick="navTo('profile')">
+        <div class="stake-top-avatar" id="stake-top-avatar">
+          <img id="stake-top-avatar-img" src="" style="display:none;">
+          <span id="stake-top-avatar-letter">?</span>
+        </div>
+        <div class="stake-top-info">
+          <div class="stake-top-title">ADWA BINGO</div>
+          <div class="stake-top-username" id="stake-top-username"></div>
+        </div>
+      </div>
       
       <!-- Existing Rules Button Untouched -->
       <button class="stake-rules-btn" onclick="openRules()">📜 RULES</button>
       
-      <!-- ADDED: Center Profile Section -->
+      <!-- Center Profile Section Untouched -->
       <div class="stake-profile-top">
         <div class="stake-avatar-wrap">
           <img id="stake-avatar-img" src="" class="stake-avatar-circle" style="display:none;">
@@ -254,7 +273,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
         <div id="stake-username" class="stake-username-display"></div>
       </div>
 
-      <!-- Minimized & Shifted Down Title -->
+      <!-- Shifted Down Title & Buttons -->
       <div class="stake-logo">🇪🇹 ADWA BINGO</div>
       <div class="stake-sub">Choose Your Stake & Win Big!</div>
       <div class="stake-box">
@@ -385,16 +404,27 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       <div class="next-label">Next round starts in</div>
       <div class="next-count" id="next-count">10</div>
     </div>
-  </div>
-  
-  <div class="screen" id="screen-profile">
+    <div class="screen" id="screen-profile">
     <div class="topbar">
       <div class="stat-box"><div class="stat-label">MAIN</div><div class="stat-val green" id="p-main">—</div></div>
       <div class="stat-box"><div class="stat-label">PLAY</div><div class="stat-val green" id="p-play">—</div></div>
       <div class="stat-box"><div class="stat-label">TOTAL</div><div class="stat-val yellow" id="p-total">—</div></div>
     </div>
     <div class="page-scroll">
-      <div class="profile-header"><div class="profile-avatar" id="p-avatar">?</div><div><div class="profile-name" id="p-name">—</div><div id="p-vip-badge" style="display:none; color:#ffd600; font-size:12px; font-weight:700; margin-top:2px;">⭐ VIP Member</div><div class="profile-id" id="p-id">ID: —</div><div class="profile-bal" id="p-bal">💰 — Br</div></div></div>
+      <!-- MODIFIED: Added img and username fields -->
+      <div class="profile-header">
+        <div class="profile-avatar" id="p-avatar">
+          <img id="p-avatar-img" src="" style="display:none;">
+          <span class="avatar-letter" id="p-avatar-letter">?</span>
+        </div>
+        <div>
+          <div class="profile-name" id="p-name">—</div>
+          <div id="p-vip-badge" style="display:none; color:#ffd600; font-size:12px; font-weight:700; margin-top:2px;">⭐ VIP Member</div>
+          <div class="profile-id" id="p-id">ID: —</div>
+          <div class="profile-username" id="p-username" style="display:none;"></div>
+          <div class="profile-bal" id="p-bal">💰 — Br</div>
+        </div>
+      </div>
       <div class="stats-row">
         <div class="stat-card"><div class="sv" id="p-played">0</div><div class="sl">Games Played</div></div>
         <div class="stat-card"><div class="sv" id="p-won">0</div><div class="sl">Games Won</div></div>
@@ -427,7 +457,19 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);ov
       <div class="stat-box"><div class="stat-label">TOTAL</div><div class="stat-val yellow" id="w-total">—</div></div>
     </div>
     <div class="page-scroll">
-      <div class="profile-header" style="margin-bottom:12px;"><div class="profile-avatar" id="wl-avatar">?</div><div><div class="profile-name" id="wl-name">—</div><div class="profile-id" id="wl-id">ID: —</div><div class="profile-bal" id="wl-bal">💰 — Br</div></div></div>
+      <!-- MODIFIED: Added img and username fields -->
+      <div class="profile-header" style="margin-bottom:12px;">
+        <div class="profile-avatar" id="wl-avatar">
+          <img id="wl-avatar-img" src="" style="display:none;">
+          <span class="avatar-letter" id="wl-avatar-letter">?</span>
+        </div>
+        <div>
+          <div class="profile-name" id="wl-name">—</div>
+          <div class="profile-id" id="wl-id">ID: —</div>
+          <div class="profile-username" id="wl-username" style="display:none;"></div>
+          <div class="profile-bal" id="wl-bal">💰 — Br</div>
+        </div>
+      </div>
       <div class="wallet-bal-box"><div class="wallet-total-label">AVAILABLE BALANCE</div><div class="wallet-total" id="wl-total-big">— Br</div><div class="wallet-sub-row"><div class="wallet-sub">Withdrawable: <span id="wl-main-sub">—</span> Br</div><div class="wallet-sub">Play: <span id="wl-play-sub">—</span> Br</div></div></div>
       <div class="section-title">Transaction History</div>
       <div class="table-box tx-table"><div class="table-head"><span>TYPE</span><span>AMOUNT</span><span>STATUS</span><span>DATE</span></div><div id="wl-tx-rows"><div class="empty-row">No transactions yet</div></div></div>
@@ -634,9 +676,35 @@ function selectStake(stake) {currentStake = stake;currentRoom = String(stake);se
 
 function backToStake() {showScreen('screen-stake');}
 
-// ADDED: Function to load Telegram Profile Pic and Username in the Home Screen
+// MODIFIED: Function to load Telegram Profile Pic and Username in Home Screen Top & Center
 function updateStakeProfile() {
   if (!tgUser) return;
+  
+  // Top Left Bar
+  var topImgEl = document.getElementById('stake-top-avatar-img');
+  var topLetterEl = document.getElementById('stake-top-avatar-letter');
+  var topUsernameEl = document.getElementById('stake-top-username');
+
+  if (tgUser.photo_url) {
+    topImgEl.src = tgUser.photo_url;
+    topImgEl.style.display = 'block';
+    topLetterEl.style.display = 'none';
+  } else {
+    var initial = (tgUser.first_name || '?').charAt(0).toUpperCase();
+    topLetterEl.textContent = initial;
+    topImgEl.style.display = 'none';
+    topLetterEl.style.display = 'inline';
+  }
+
+  if (tgUser.username) {
+    topUsernameEl.textContent = '@' + tgUser.username;
+    topUsernameEl.style.display = 'block';
+  } else {
+    topUsernameEl.textContent = '';
+    topUsernameEl.style.display = 'none';
+  }
+
+  // Center Profile Section (kept as requested)
   var imgEl = document.getElementById('stake-avatar-img');
   var letterEl = document.getElementById('stake-avatar-letter');
   var nameEl = document.getElementById('stake-username');
@@ -678,7 +746,44 @@ async function deductBet(amount){if(!tgUserId||!apiAvailable)return true;try{var
 async function reportWin(amount,gameId){if(!tgUserId||!apiAvailable||myWinReported)return;myWinReported=true;try{var res=await fetch(API_BASE+'/api/win',{method:'POST',headers:apiHeaders,body:JSON.stringify({user_id:tgUserId,amount:amount,game_id:gameId})});var data=await res.json();if(data.success){userMainBalance=data.main_balance;userPlayBalance=data.play_balance;updateBalanceDisplay();}}catch(e){}}
 async function recordGamePlayed(gameId,cardNums,stake){if(!tgUserId||!apiAvailable)return;try{await fetch(API_BASE+'/api/game_played',{method:'POST',headers:apiHeaders,body:JSON.stringify({user_id:tgUserId,game_id:gameId,cards:cardNums,stake:stake,room:currentRoom})});}catch(e){}}
 function updateBalanceDisplay(){var mainStr=userMainBalance.toFixed(2);var playStr=userPlayBalance.toFixed(2);var totalStr=(userMainBalance+userPlayBalance).toFixed(2);setTxt('s-main',mainStr);setTxt('s-play',playStr);setTxt('p-main',mainStr);setTxt('p-play',playStr);setTxt('p-total',totalStr);setTxt('tw-main',mainStr);setTxt('tw-play',playStr);setTxt('tw-total',totalStr);setTxt('w-main',mainStr);setTxt('w-play',playStr);setTxt('w-total',totalStr);setTxt('wl-main-sub',mainStr);setTxt('wl-play-sub',playStr);setTxt('wl-total-big',totalStr+' Br');setTxt('p-bal','💰 '+totalStr+' Br');setTxt('wl-bal','💰 '+totalStr+' Br');var noBalMsg=document.getElementById('no-balance-msg');if(apiAvailable&&(userPlayBalance+userMainBalance)<currentStake)noBalMsg.style.display='block';else noBalMsg.style.display='none';}
-function updateUserInfo(){if(!tgUser)return;var name=(tgUser.first_name||'')+(tgUser.last_name?' '+tgUser.last_name:'');var initial=name.charAt(0).toUpperCase()||'?';var idStr='ID: '+tgUserId;setTxt('p-name',name);setTxt('wl-name',name);setTxt('p-id',idStr);setTxt('wl-id',idStr);['p-avatar','wl-avatar'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=initial;});}
+
+// MODIFIED: Function to update Profile & Wallet Box (Added Profile Picture + @username)
+function updateUserInfo(){
+  if(!tgUser)return;
+  var name=(tgUser.first_name||'')+(tgUser.last_name?' '+tgUser.last_name:'');
+  var initial=name.charAt(0).toUpperCase()||'?';
+  var idStr='ID: '+tgUserId;
+  setTxt('p-name',name);
+  setTxt('wl-name',name);
+  setTxt('p-id',idStr);
+  setTxt('wl-id',idStr);
+
+  // Handle Avatars
+  var pImg = document.getElementById('p-avatar-img');
+  var pLetter = document.getElementById('p-avatar-letter');
+  var wlImg = document.getElementById('wl-avatar-img');
+  var wlLetter = document.getElementById('wl-avatar-letter');
+
+  if (tgUser.photo_url) {
+    pImg.src = tgUser.photo_url; pImg.style.display = 'block'; pLetter.style.display = 'none';
+    wlImg.src = tgUser.photo_url; wlImg.style.display = 'block'; wlLetter.style.display = 'none';
+  } else {
+    pLetter.textContent = initial; pImg.style.display = 'none'; pLetter.style.display = 'flex';
+    wlLetter.textContent = initial; wlImg.style.display = 'none'; wlLetter.style.display = 'flex';
+  }
+
+  // Handle Usernames
+  var pUsername = document.getElementById('p-username');
+  var wlUsername = document.getElementById('wl-username');
+
+  if (tgUser.username) {
+    pUsername.textContent = '@' + tgUser.username; pUsername.style.display = 'block';
+    wlUsername.textContent = '@' + tgUser.username; wlUsername.style.display = 'block';
+  } else {
+    pUsername.style.display = 'none';
+    wlUsername.style.display = 'none';
+  }
+}
 
 function navTo(tab){['home','profile','winners','wallet'].forEach(function(t){document.getElementById('nav-'+t).classList.toggle('active',t===tab);});var map={home:'screen-stake',profile:'screen-profile',winners:'screen-winners',wallet:'screen-wallet'};document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});var s=document.getElementById(map[tab]);if(s)s.classList.add('active');if(tab==='home'){showScreen('screen-stake');}if(tab==='profile')loadProfile();if(tab==='winners')loadLeaderboard();if(tab==='wallet')loadWallet();}
 
