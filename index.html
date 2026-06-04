@@ -255,10 +255,18 @@ async function checkGameState(){
     currentGameId=state.game_id||null;
     setTxt('game-id-label',currentGameId||'Waiting...');setTxt('w-game-id',currentGameId||'Waiting...');
     showSelectScreen();startTimer();
+    // ✅ ASK SERVER TO START COUNTDOWN AND GIVE US A GAME ID!
+    if(socket&&socket.connected&&!currentGameId){
+      socket.emit('request_countdown',{room:currentRoom});
+    }
   } else {
     currentGameId=null;
     setTxt('game-id-label','Waiting...');setTxt('w-game-id','Waiting...');
     showSelectScreen();startTimer();
+    // ✅ ASK SERVER TO START COUNTDOWN AND GIVE US A GAME ID!
+    if(socket&&socket.connected){
+      socket.emit('request_countdown',{room:currentRoom});
+    }
   }
 }
 
